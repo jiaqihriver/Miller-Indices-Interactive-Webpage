@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>米勒指数交互教程 · Miller Indices</title>
+<style>
+:root{
+  --bg:#0e1116; --panel:#151a21; --panel2:#1a2129; --line:#27313c;
+  --fg:#e8eef4; --dim:#8fa0b0; --accent:#4cc2ff; --accent2:#ffb454;
+  --ok:#3fcf8e; --bad:#ff6b6b; --ghost:#3a4753; --axis:#c8d4e0;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.25);
+}
+html[data-theme="light"]{
+  --bg:#f6f8fa; --panel:#ffffff; --panel2:#f0f3f6; --line:#dde4ea;
+  --fg:#16202b; --dim:#5c6b7a; --accent:#0f6fd6; --accent2:#b96a00;
+  --ok:#12854a; --bad:#c92a2a; --ghost:#b9c5d0; --axis:#2a3742;
+  --shadow:0 1px 2px rgba(16,24,32,.06),0 8px 24px rgba(16,24,32,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Segoe UI,Roboto,sans-serif;
+  font-size:15px; line-height:1.75; -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent);text-decoration:none}
+.wrap{display:flex;gap:0;max-width:1180px;margin:0 auto;padding:0 20px}
+/* ---------- top bar ---------- */
+.top{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
+.top .wrap{align-items:center;height:58px;justify-content:space-between}
+.brand{display:flex;align-items:baseline;gap:10px;font-weight:650;letter-spacing:.2px}
+.brand small{font-weight:400;color:var(--dim);font-size:12.5px;letter-spacing:0}
+.tools{display:flex;gap:8px;align-items:center}
+/* ---------- sidebar ---------- */
+aside{width:206px;flex:0 0 206px;padding:26px 0 60px;position:sticky;top:58px;
+  align-self:flex-start;max-height:calc(100vh - 58px);overflow-y:auto}
+aside ol{list-style:none;margin:0;padding:0;counter-reset:s}
+aside li{counter-increment:s}
+aside li.grp{counter-increment:none}
+aside a{display:grid;grid-template-columns:16px 1fr;gap:7px;align-items:baseline;
+  padding:6px 10px;border-radius:8px;color:var(--dim);font-size:13.5px;
+  border-left:2px solid transparent;line-height:1.45}
+aside a::before{content:counter(s,decimal-leading-zero);font-size:11px;opacity:.55;
+  font-variant-numeric:tabular-nums}
+aside a:hover{color:var(--fg);background:var(--panel)}
+aside a.on{color:var(--accent);border-left-color:var(--accent);background:var(--panel)}
+main{flex:1;min-width:0;padding:26px 0 90px;max-width:940px}
+/* ---------- sections ---------- */
+section{margin:0 0 46px;scroll-margin-top:76px}
+h1{font-size:25px;margin:6px 0 6px;letter-spacing:-.2px;font-weight:650}
+h2{font-size:19px;margin:0 0 4px;font-weight:640;letter-spacing:-.1px}
+h3{font-size:15px;margin:26px 0 8px;font-weight:620}
+.lead{color:var(--dim);margin:0 0 16px;font-size:14px}
+.hd{display:flex;align-items:baseline;gap:10px;margin-bottom:2px}
+.hd .idx{font-size:12px;color:var(--accent);font-variant-numeric:tabular-nums;
+  border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:18px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card.tight{padding:14px 16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid2x{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:16px;align-items:start}
+@media(max-width:900px){.grid2,.grid2x{grid-template-columns:1fr}
+  aside{display:none}.wrap{padding:0 14px}}
+/* ---------- figure ---------- */
+.fig{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px;
+  display:flex;align-items:center;justify-content:center;overflow:hidden}
+.fig svg{width:100%;height:auto;display:block}
+/* SVG 内嵌文字加一圈背景色描边，压在晶体线条上也读得清 */
+svg foreignObject>div{text-shadow:0 0 4px var(--bg),0 0 4px var(--bg),0 0 4px var(--bg),0 0 4px var(--bg)}
+/* ---- 可交互图：拖动旋转 / 滚轮缩放 ---- */
+.fig{position:relative;overflow:hidden}
+.vb{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+.vb:active{cursor:grabbing}
+.rst{position:absolute;top:7px;right:7px;z-index:3;font-family:inherit;font-size:11.5px;line-height:1;
+  padding:5px 9px;border-radius:7px;border:1px solid var(--line);cursor:pointer;
+  background:color-mix(in srgb,var(--panel) 78%,transparent);color:var(--dim);
+  opacity:.34;transition:opacity .16s,color .16s,border-color .16s;backdrop-filter:blur(4px)}
+.fig:hover .rst{opacity:.9}
+.fig .rst:hover{opacity:1;color:var(--fg)}
+.rst.on{opacity:1;color:var(--accent);border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.rstbar{position:static;opacity:.8;background:var(--panel2)}
+.rstbar.on{opacity:1}
+.vbhint{position:absolute;left:9px;bottom:7px;z-index:3;font-size:11px;color:var(--dim);
+  opacity:0;transition:opacity .16s;pointer-events:none}
+.fig:hover .vbhint{opacity:.75}
+/* ---------- 分页：一次只显示一页 ---------- */
+.page{display:none}
+.page.on{display:block;animation:pgIn .28s cubic-bezier(.22,.7,.3,1) both}
+@keyframes pgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+main>section.page{margin:0 0 4px}
+/* ---------- 翻页条 ---------- */
+.pager{position:sticky;bottom:0;z-index:20;margin-top:14px;padding:10px 0 10px;
+  background:linear-gradient(to top,var(--bg) 60%,transparent)}
+.pgbar{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px;
+  box-shadow:var(--shadow)}
+.pgbar .btn{padding:6px 13px}
+.pgbar .btn:disabled{opacity:.32;cursor:default;border-color:var(--line);color:var(--dim)}
+.pgbar .btn:disabled:hover{border-color:var(--line);color:var(--dim)}
+.pgind{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--dim);min-width:0}
+.pgind b{color:var(--fg);font-variant-numeric:tabular-nums}
+.pgind .pgtitle{color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px}
+@media(max-width:620px){.pgind .pgtitle{display:none}}
+/* ---------- 导航分组 ---------- */
+aside li.grp{font-size:10.5px;color:var(--dim);opacity:.75;margin:13px 0 2px 10px;letter-spacing:.08em}
+aside li.sub a{padding-left:22px}
+aside li.sub a::before{opacity:.4;font-size:10px}
+.figcap{color:var(--dim);font-size:12.5px;text-align:center;margin-top:8px}
+/* ---------- controls ---------- */
+.btn{appearance:none;border:1px solid var(--line);background:var(--panel2);color:var(--fg);
+  border-radius:9px;padding:6px 12px;font-size:13.5px;cursor:pointer;font-family:inherit;
+  transition:.14s;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{padding:4px 9px;font-size:12.5px;border-radius:7px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.pri:hover{filter:brightness(1.08);color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lbl{font-size:12.5px;color:var(--dim);margin-right:2px}
+input[type=text],input[type=number],select{
+  background:var(--panel2);border:1px solid var(--line);color:var(--fg);border-radius:8px;
+  padding:6px 9px;font-size:14px;font-family:inherit;text-align:center;font-variant-numeric:tabular-nums}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+input.num{width:56px}
+input.fnum{width:70px}
+select{padding:6px 8px;text-align:left}
+.sw{height:22px;width:42px;border-radius:11px;background:var(--line);border:none;position:relative;
+  cursor:pointer;flex:0 0 auto}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;
+  background:var(--fg);opacity:.7;transition:.16s}
+.sw.on{background:var(--accent)}.sw.on::after{left:22px;background:#fff;opacity:1}
+/* ---------- math ---------- */
+.m{font-family:"Latin Modern Math",Cambria,"Times New Roman",Georgia,serif;font-size:17px;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.m .i{color:var(--accent2);font-style:italic}
+.m .n{color:var(--fg)}
+.m .br{color:var(--accent);font-weight:600}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
+  font-size:.8em;line-height:1.06;margin:0 .14em}
+.frac>i{border-bottom:1px solid currentColor;padding:0 .22em;font-style:normal}
+.frac>s{text-decoration:none;padding:0 .22em}
+.bar{text-decoration:overline;text-decoration-thickness:1px}
+.eq{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:12px 14px;
+  background:var(--panel2);border:1px solid var(--line);border-radius:10px;min-height:52px}
+.eq .op{color:var(--dim);font-size:14px}
+.eq .val{font-variant-numeric:tabular-nums}
+/* 左侧竖线的列表：padding 要给编号留出位置，否则序号会贴到竖线上 */
+.step{border-left:2px solid var(--line);margin:10px 0 0;padding:0 0 0 30px}
+.step>li{margin:0 0 12px;font-size:14px}
+.step>li::marker{color:var(--accent);font-weight:600}
+.step>li>b{font-weight:640}
+kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:var(--panel2);
+  border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 6px}
+/* ---------- misc ---------- */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--dim);font-weight:550;font-size:12.5px}
+tr:last-child td{border-bottom:none}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+  background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+details{border:1px solid var(--line);border-radius:11px;background:var(--panel2);margin:12px 0}
+details>summary{cursor:pointer;padding:10px 14px;font-size:13.5px;font-weight:600;color:var(--accent);
+  list-style:none;user-select:none}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"▸ ";display:inline-block;transition:.16s}
+details[open]>summary::before{transform:rotate(90deg)}
+details .body{padding:2px 16px 16px}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:20px;
+  border:1px solid var(--line);color:var(--dim)}
+.tag.a{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+.tag.b{color:var(--accent2);border-color:color-mix(in srgb,var(--accent2) 40%,transparent)}
+.note{font-size:13px;color:var(--dim);border-left:2px solid var(--accent2);padding:3px 0 3px 15px;margin:12px 0}
+.note b{color:var(--fg)}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;padding:4px 10px;font-size:13px;font-variant-numeric:tabular-nums}
+.pill .k{color:var(--dim);font-size:12px}
+.hint{font-size:12.5px;color:var(--dim);margin-top:8px}
+footer{border-top:1px solid var(--line);margin-top:20px;padding:18px 0 40px;color:var(--dim);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="top"><div class="wrap">
+  <div class="brand">米勒指数交互教程<small>Miller Indices · 晶向与晶面</small></div>
+  <div class="tools">
+    <button class="btn sm" id="resetAll" title="把所有图的角度和缩放恢复初始状态">⟲ 全部还原</button>
+    <button class="btn sm" id="themeBtn">☀ 浅色</button>
+  </div>
+</div></div>
+
+<div class="wrap">
+<aside><ol id="nav"></ol></aside>
+<main>
+<section class="page" id="s1" data-title="记号速查">
+<div class="card tight" style="display:flex;gap:14px;align-items:center;margin-bottom:30px">
+  <div style="font-size:22px;line-height:1">◫</div>
+  <div style="font-size:13.5px;color:var(--dim)">
+    <b style="color:var(--fg)">怎么用这一页：</b>左边选页面，中间所有立方体都是<b style="color:var(--fg)">可操作</b>的——
+    改数字、点按钮，图和公式会当场变。每个例题都有可展开的解析和「举一反三」。<br>
+    <b style="color:var(--fg)">拖动</b>图面 = 旋转晶胞；<b style="color:var(--fg)">滚轮 / 双指</b> = 缩放；
+    <kbd>Shift</kbd> + 拖动 = 平移；<b style="color:var(--fg)">双击</b>或右上角 <span class="tag a">⟲ 还原</span> 一键复位。翻页用底部的按钮或键盘 <kbd>←</kbd> <kbd>→</kbd>。
+  </div>
+</div>
+
+  <div class="hd"><span class="idx">01</span><h2>记号速查</h2></div>
+  <p class="lead">同一组数字用不同括号，含义完全不同。先把这个对照表刻进脑子，后面所有内容都靠它。</p>
+
+  <div class="grid2x">
+    <div>
+      <table>
+        <tr><th>写法</th><th>含义</th><th>记忆点</th></tr>
+        <tr><td><span class="m"><span class="br">(</span>h,k,l<span class="br">)</span></span></td><td>一个<b>点</b> / 位置</td><td>带逗号，写法同笛卡尔坐标</td></tr>
+        <tr><td><span class="m"><span class="br">[</span>uvw<span class="br">]</span></span></td><td>一个<b>晶向</b></td><td>方括号 + 无逗号</td></tr>
+        <tr><td><span class="m"><span class="br">&lt;</span>uvw<span class="br">&gt;</span></span></td><td><b>晶向族</b></td><td>尖括号 = 一族等价方向</td></tr>
+        <tr><td><span class="m"><span class="br">(</span>hkl<span class="br">)</span></span></td><td>一个<b>晶面</b></td><td>圆括号 + 无逗号</td></tr>
+        <tr><td><span class="m"><span class="br">{</span>hkl<span class="br">}</span></span></td><td><b>晶面族</b></td><td>花括号 = 一族等价晶面</td></tr>
+      </table>
+      <div class="note"><b>负号用上划线写。</b>不写 −1，写 <span class="m"><span class="bar">1</span></span>，读作「bar one」。
+        <span class="m">[0<span class="bar">1</span>0]</span> 读作「zero bar-one zero 方向」。<br>
+        <b>例外：</b>描述「点」时用普通负号 <span class="m">(-h,k,l)</span>，不用上划线；点也<b>不化简</b>分数。</div>
+    </div>
+    <div>
+      <div class="fig"><svg id="svgNota" viewBox="0 0 560 430"></svg></div>
+      <div class="row" style="margin-top:10px;justify-content:center">
+        <button class="btn sm" data-nota="pt">(1,1,1) 点</button>
+        <button class="btn sm" data-nota="dir">[111] 晶向</button>
+        <button class="btn sm" data-nota="fam">⟨111⟩ 晶向族</button>
+        <button class="btn sm" data-nota="pl">(111) 晶面</button>
+        <button class="btn sm" data-nota="pfl">{111} 晶面族</button>
+      </div>
+      <p class="hint" id="notaHint" style="text-align:center">点按钮，看同一组 1,1,1 在不同括号下到底指什么。</p>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="s2" data-title="坐标系与原点">
+  <div class="hd"><span class="idx">02</span><h2>坐标系与原点</h2></div>
+  <p class="lead">米勒指数是一套以<b>晶胞</b>为尺度的坐标系。原点可以取在任何地方，习惯上取晶胞的「后左下角」。</p>
+
+  <div class="grid2x">
+    <div>
+      <div id="coordFig">
+        <div class="fig" id="wrapCoord"><svg id="svgCoord" viewBox="0 0 560 430"></svg></div>
+        <div class="fig" id="wrapHex" style="display:none"><svg id="svgHexTop" viewBox="0 0 560 430"></svg></div>
+      </div>
+      <div class="row" style="margin-top:10px;justify-content:center">
+        <button class="btn sm on" id="btnCubic">立方晶系</button>
+        <button class="btn sm" id="btnHex">六方晶系</button>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-top:0">三条规矩</h3>
+      <ol class="step">
+        <li><b>标尺 = 晶胞边长。</b><span class="m n">0</span> 是本晶胞的原点，
+          <span class="m n">1</span> 是下一晶胞的原点。</li>
+        <li><b>轴的方向和高中不同。</b>晶体学里让 <span class="m"><span class="i">x</span></span> 指向你（画面左下）、
+          <span class="m"><span class="i">y</span></span> 向右、<span class="m"><span class="i">z</span></span> 向上。
+          所以点 <span class="m">(1,2,3)</span> 是「朝你 1 步、向右 2 步、向上 3 步」。</li>
+        <li><b>轴不一定互相垂直。</b>立方晶系里三条轴两两 90°；
+          六方晶系里 <span class="m"><span class="i">a</span><sub>1</sub></span> 与
+          <span class="m"><span class="i">a</span><sub>2</sub></span> 夹角 <b>120°</b>，再一起垂直于
+          <span class="m"><span class="i">c</span></span>。</li>
+      </ol>
+      <div class="note">所以同一个点 <span class="m">(1,1,1)</span> 在立方和六方里落的位置完全不同——
+        <b>不谈晶系就没法谈米勒指数</b>。切到「六方晶系」看俯视图。</div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="s3" data-title="晶格中的点">
+  <div class="hd"><span class="idx">03</span><h2>晶格中的点：<span class="m"><span class="br">(</span>h,k,l<span class="br">)</span></span></h2></div>
+  <p class="lead">严格说米勒指数不描述「点」，但材料学家用一套几乎一样的写法来标位置：圆括号 + 逗号，和笛卡尔坐标写法一致。</p>
+
+  <div class="grid2x">
+    <div>
+      <div class="fig"><svg id="svgPt" viewBox="0 0 560 430"></svg></div>
+      <div class="row" style="margin-top:10px;justify-content:center">
+        <button class="btn sm" data-pt="0,0,0">(0,0,0)</button>
+        <button class="btn sm" data-pt="1,1,1">(1,1,1)</button>
+        <button class="btn sm" data-pt="1/2,1/2,1/2">(½,½,½)</button>
+        <button class="btn sm" data-pt="1,2/3,1/2">(1,⅔,½)</button>
+      </div>
+    </div>
+    <div>
+      <div class="row"><span class="lbl">x</span><input class="fnum" id="ptx" value="1">
+        <span class="lbl">y</span><input class="fnum" id="pty" value="2/3">
+        <span class="lbl">z</span><input class="fnum" id="ptz" value="1/2"></div>
+      <div class="hint">输入小数或分数（如 <code>2/3</code>），点会实时落到晶胞里。</div>
+      <div class="eq" id="ptRead" style="margin-top:10px"></div>
+      <ul class="step">
+        <li><span class="m">(1,1,1)</span> 永远是原点的对角顶点。</li>
+        <li><span class="m">(½,½,½)</span> 永远是晶胞的<b>体心</b>。</li>
+        <li>点用<b>普通负号</b> <span class="m">(-½, ⅓, 1)</span>，<b>不用</b>上划线。</li>
+        <li>点<b>不化简分数</b>：<span class="m">(½,⅔,½)</span> 就保持原样，化简约分是「方向」才做的事。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="s4" data-title="晶向 [uvw]">
+  <div class="hd"><span class="idx">04</span><h2>晶向：<span class="m"><span class="br">[</span>uvw<span class="br">]</span></span></h2></div>
+  <p class="lead">描述一个方向，只需要知道「从原点朝那个方向走到的点」，最后把分数乘掉。</p>
+
+  <div class="card tight">
+    <ol class="step" style="margin-top:0">
+      <li><b>定原点。</b>取后左下角。晶体有平移对称性，原点可以随便挪，也可以平移向量本身。</li>
+      <li><b>找点。</b>沿该方向走 <span class="m"><span class="i">u</span></span> 个 <span class="m"><span class="i">x</span></span>、
+        <span class="m"><span class="i">v</span></span> 个 <span class="m"><span class="i">y</span></span>、
+        <span class="m"><span class="i">w</span></span> 个 <span class="m"><span class="i">z</span></span> 得到终点。</li>
+      <li><b>化简分数、去掉逗号</b>，写成 <span class="m"><span class="br">[</span>uvw<span class="br">]</span></span>。方向的长度不重要，无限延伸，所以可以任意放大。</li>
+    </ol>
+  </div>
+
+  <div class="grid2x">
+    <div>
+      <div class="fig"><svg id="svgDir" viewBox="0 0 560 430"></svg></div>
+      <div class="row" style="margin-top:10px;justify-content:center">
+        <button class="btn sm" data-dir="1,0,0">[100]</button>
+        <button class="btn sm" data-dir="0,1,0">[010]</button>
+        <button class="btn sm" data-dir="0,0,1">[001]</button>
+        <button class="btn sm" data-dir="1,1,0">[110]</button>
+        <button class="btn sm" data-dir="1,1,1">[111]</button>
+        <button class="btn sm" data-dir="-1,1,0">[1̄10]</button>
+        <button class="btn sm" data-dir="0.25,1,0">[¼ 1 0]</button>
+      </div>
+    </div>
+    <div>
+      <div class="row" style="gap:6px">
+        <span class="lbl m">u</span><input class="fnum" id="dirU" value="0.25">
+        <button class="btn sm" data-neg="dirU" title="取反">±</button>
+        <span class="lbl m">v</span><input class="fnum" id="dirV" value="1">
+        <button class="btn sm" data-neg="dirV" title="取反">±</button>
+        <span class="lbl m">w</span><input class="fnum" id="dirW" value="0">
+        <button class="btn sm" data-neg="dirW" title="取反">±</button>
+      </div>
+      <h3>分数化简（可操作）</h3>
+      <div class="eq" id="dirFormula"></div>
+      <div class="hint" id="dirHint"></div>
+      <div class="note">若某个指数为 <b>负</b>，向量会伸出晶胞——这是完全合法的，
+        因为<b>背后永远有完全相同的下一格晶胞</b>。图上会用虚线画出那一格。</div>
+      <div class="hint">小技巧：<span class="m">[¼,1,0]</span> 与 <span class="m">[1,4,0]</span> 是<b>同一个</b>取向，
+        因为方向无限长。惯例是乘到全整数。</div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="s5" data-title="晶面 (hkl)">
+  <div class="hd"><span class="idx">05</span><h2>晶面：<span class="m"><span class="br">(</span>hkl<span class="br">)</span></span></h2></div>
+  <p class="lead">读晶面要走进「倒易空间」——把截距取倒数。这是整套记号里唯一一处反直觉的地方，也只要三步。</p>
+
+  <div class="card tight">
+    <ol class="step" style="margin-top:0">
+      <li><b>找截距。</b>看这个平面与三条轴分别交在哪里。如果平面与某条轴<b>平行</b>（永不相交），截距记作 <span class="m">∞</span>。</li>
+      <li><b>取倒数。</b><span class="m">1/1=1</span>，<span class="m">1/2=½</span>，而 <span class="m">1/∞=0</span>。</li>
+      <li><b>写成 <span class="m"><span class="br">(</span>hkl<span class="br">)</span></span>。</b>约成最简整数，不加逗号、不加空格；负号写成上划线。</li>
+    </ol>
+  </div>
+
+  <div class="grid2x">
+    <div>
+      <div class="fig"><svg id="svgPlane" viewBox="0 0 560 430"></svg></div>
+      <div class="row" style="margin-top:10px;justify-content:center">
+        <button class="btn sm" data-pl="100">(100)</button>
+        <button class="btn sm" data-pl="010">(010)</button>
+        <button class="btn sm" data-pl="001">(001)</button>
+        <button class="btn sm" data-pl="110">(110)</button>
+        <button class="btn sm" data-pl="111">(111)</button>
+        <button class="btn sm" data-pl="220">(220)</button>
+        <button class="btn sm" data-pl="123">(123)</button>
+      </div>
+    </div>
+    <div>
+      <div class="row" style="gap:6px">
+        <span class="lbl">x 截距</span><input class="fnum" id="icX" value="1">
+        <span class="lbl">y 截距</span><input class="fnum" id="icY" value="1">
+        <span class="lbl">z 截距</span><input class="fnum" id="icZ" value="inf">
+      </div>
+      <div class="hint">可直接输入 <code>∞</code> 或 <code>inf</code> 表示「与该轴平行」。</div>
+      <h3>三步法（可操作）</h3>
+      <div id="planeFormula"></div>
+      <div class="note" id="planeNote"></div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="s6" data-title="[hkl] 与 (hkl) 的关系">
+  <div class="hd"><span class="idx">06</span><h2>立方晶系里：<span class="m"><span class="br">[</span>hkl<span class="br">]</span> ⟂ <span class="br">(</span>hkl<span class="br">)</span></span></h2></div>
+  <p class="lead">立方晶系里，数字相同的晶向和晶面永远互相垂直。数字换一下立刻验证。</p>
+
+  <div class="grid2x">
+    <div>
+      <div class="fig"><svg id="svgPerp" viewBox="0 0 560 430"></svg></div>
+      <div class="row" style="margin-top:10px;justify-content:center">
+        <button class="btn sm" data-perp="1,1,0">[110] ⟂ (110)</button>
+        <button class="btn sm" data-perp="1,1,1">[111] ⟂ (111)</button>
+        <button class="btn sm" data-perp="1,0,0">[100] ⟂ (100)</button>
+        <button class="btn sm" data-perp="-1,1,0">[1̄10] ⟂ (1̄10)</button>
+      </div>
+    </div>
+    <div>
+      <div class="row"><span class="lbl m">h</span><input class="num" id="perpH" value="1">
+        <span class="lbl m">k</span><input class="num" id="perpK" value="1">
+        <span class="lbl m">l</span><input class="num" id="perpL" value="0"></div>
+      <div class="eq" id="perpRead" style="margin-top:10px"></div>
+      <div class="note"><b>只对立方晶系成立。</b>严格地说，这个结论来自「截距的倒数 ∝ 法向量分量」，
+        只有在轴互相垂直且等长时，法向量的三个分量才恰好等于 <span class="m">h,k,l</span>。
+        六方、单斜等晶系里两者一般<b>不垂直</b>。</div>
+      <div class="hint">再验一次反向的例子：<span class="m">(220)</span> 与 <span class="m">(110)</span> 是平行但不同的一组面
+        ——它们法向相同，但面间距差一倍。衍射实验里这个差别是能测出来的。</div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="s7" data-title="晶向族 &lt;uvw&gt;" data-group="晶向族与晶面族">
+  <div class="hd"><span class="idx">07</span><h2>晶向族 <span class="m"><span class="br">&lt;</span>uvw<span class="br">&gt;</span></span></h2></div>
+  <p class="lead">由于对称性，很多方向的物理性质完全一样。用尖括号把它们一网打尽，就不必逐个讨论。</p>
+
+  <h3 style="margin-top:16px">一个 <span class="m">[100]</span> 其实代表了 6 个方向</h3>
+  <div class="grid2x">
+    <div class="fig"><svg id="svgFamDir" viewBox="0 0 560 430"></svg></div>
+    <div>
+      <div class="row">
+        <button class="btn sm on" data-fd="100">⟨100⟩</button>
+        <button class="btn sm" data-fd="110">⟨110⟩</button>
+        <button class="btn sm" data-fd="111">⟨111⟩</button>
+      </div>
+      <div class="eq" id="famDirRead" style="margin-top:10px"></div>
+      <h3>怎么找出全族成员</h3>
+      <ul class="step">
+        <li>把每个指数<b>轮换/重排</b>（顺序可以换），例如 <span class="m">[110]→[101]</span>。</li>
+        <li>把每个指数<b>逐个取反</b>（变成上划线），例如 <span class="m">[110]→[1̄10]</span>。</li>
+        <li>前提是三条轴<b>等长且夹角相同</b>；否则重排会跨到另一族去。</li>
+      </ul>
+      <div class="note"><b>立方晶格对称性最高</b>，所以每族的成员最多：<span class="m">&lt;100&gt;</span> 有 6 个、
+        <span class="m">&lt;110&gt;</span> 有 12 个、<span class="m">&lt;111&gt;</span> 有 8 个。
+        同一族的晶向，对应的晶面也同族。</div>
+    </div>
+  </div>
+
+  </section>
+
+<section class="page" id="s7b" data-title="晶面族 {hkl}" data-group="晶向族与晶面族">
+  <div class="hd"><span class="idx">08</span><h2>晶面族 <span class="m"><span class="br">{</span>hkl<span class="br">}</span></span></h2></div>
+  <p class="lead">同一族的晶面由对称性互相关联。逐个看一遍，就知道三个常见族各有多少成员、长什么形状。</p>
+  <div class="row" style="margin-top:16px">
+    <button class="btn sm on" data-fp="100">{100}</button>
+    <button class="btn sm" data-fp="110">{110}</button>
+    <button class="btn sm" data-fp="111">{111}</button>
+    <span class="pill" id="famPlaneCount"><span class="k">成员</span><b>6</b></span>
+    <span id="famPlaneBar"></span>
+  </div>
+  <div id="famPlaneGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px"></div>
+  <div class="hint" id="famPlaneHint"></div>
+
+  </section>
+
+<section class="page" id="s7c" data-title="立方 vs 四方" data-group="晶向族与晶面族">
+  <div class="hd"><span class="idx">09</span><h2>立方 vs 四方：<span class="m">&lt;100&gt;</span> 会分裂</h2></div>
+  <p class="lead">指数能不能互相重排，取决于三条轴是否等长。四方晶系里 <span class="m">a=a≠c</span>，<span class="m">[001]</span> 就落单了。</p>
+  <div class="grid2" style="margin-top:16px">
+    <div><div class="fig"><svg id="svgCubTetra" viewBox="0 0 560 430"></svg></div>
+      <div class="figcap">立方 <span class="m">a=a=a</span>：<span class="m">[100][010][001]</span> 三个方向完全等价，同属 <span class="m">&lt;100&gt;</span>。</div></div>
+    <div><div class="fig"><svg id="svgTetra" viewBox="0 0 560 430"></svg></div>
+      <div class="figcap">四方 <span class="m">a=a≠c</span>：<span class="m"><span class="i">c</span></span> 更长。<span class="m">[001]</span> 单独成一族，
+        只剩 <span class="m">[100][010][1̄00][01̄0]</span> 凑成 <span class="m">&lt;100&gt;</span>。</div></div>
+  </div>
+</section>
+
+<section class="page" id="s8a" data-title="例 1 · 画出三个晶向" data-group="例题精讲">
+  <div class="hd"><span class="idx">10</span><h2>例 1 · 画出三个晶向</h2></div>
+  <div class="card">
+    <div class="row"><b>在立方晶胞中画出 <span class="m">[100]</span>、<span class="m">[111]</span>、<span class="m">[010]</span> 三个晶向。</b></div>
+    <div class="grid2x" style="margin-top:12px">
+      <div class="fig"><svg id="ex1" viewBox="0 0 560 430"></svg></div>
+      <div>
+        <details open><summary>查看解析</summary><div class="body">
+          <ol class="step">
+            <li><b>定原点。</b>取后左下角作为 <span class="m">(0,0,0)</span>。</li>
+            <li><b>找终点。</b>指数的数字就是终点坐标：<span class="m">[100]→(1,0,0)</span>、
+              <span class="m">[010]→(0,1,0)</span>、<span class="m">[111]→(1,1,1)</span>。</li>
+            <li><b>连线。</b>原点到终点的连线，无限延伸出去，就是晶向。</li>
+          </ol>
+        </div></details>
+        <details><summary>举一反三</summary><div class="body">
+          <p style="font-size:13.5px;margin:0 0 8px">把下面每个晶向的终点写在纸上，再用右边的方向实验区验证：</p>
+          <div class="row"><button class="btn sm" data-try-ex1="0,1,0">[010] 终点在哪？</button>
+            <button class="btn sm" data-try-ex1="1,0,1">[101] 终点在哪？</button>
+            <button class="btn sm" data-try-ex1="1,1,1">[111] 是体对角线吗？</button></div>
+          <div class="hint" id="ex1Hint"></div>
+        </div></details>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<section class="page" id="s8b" data-title="例 2 · 读出箭头所指的晶向" data-nav="例 2 · 读出晶向" data-group="例题精讲">
+  <div class="hd"><span class="idx">11</span><h2>例 2 · 读出箭头所指的晶向</h2></div>
+  <div class="card">
+    <div class="row"><b>写出图中箭头所指晶向的米勒指数。</b></div>
+    <div class="grid2x" style="margin-top:12px">
+      <div class="fig"><svg id="ex2" viewBox="0 0 560 430"></svg></div>
+      <div>
+        <div class="row"><button class="btn sm pri" id="ex2Reveal">显示答案</button>
+          <span class="m" id="ex2Ans">[???]</span></div>
+        <div class="hint">先自己数：往 x 走几格？往 y 走几格？往 z 走几格？</div>
+        <details><summary>查看解析</summary><div class="body">
+          <ol class="step">
+            <li><b>定原点。</b>这个箭头没有穿过后左下角，所以要么把原点挪过去，
+              要么把箭头<b>平移</b>到后左下角起步——两者等价，因为晶胞之间是平移重复的。</li>
+            <li><b>数格子。</b>x 方向走 <b>0</b> 格，y 方向走 <b>0</b> 格，z 方向走 <b>1</b> 格。终点就是 <span class="m">(0,0,1)</span>。</li>
+            <li><b>写指数。</b><span class="m">[001]</span>。</li>
+          </ol>
+        </div></details>
+        <details><summary>举一反三</summary><div class="body">
+          <p style="font-size:13.5px;margin:0 0 8px">把箭头反向，指数变成什么？如果把原点挪到<b>前右上角</b>呢？</p>
+          <div class="row"><button class="btn sm" data-try-ex2="0,0,-1">反向</button>
+            <button class="btn sm" data-try-ex2="1,1,0">原点到前右上</button></div>
+          <div class="hint" id="ex2Hint"></div>
+        </div></details>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<section class="page" id="s8c" data-title="例 3 · 点坐标与晶向指数" data-nav="例 3 · 点与晶向" data-group="例题精讲">
+  <div class="hd"><span class="idx">12</span><h2>例 3 · 点坐标与晶向指数</h2></div>
+  <div class="card">
+    <div class="row"><b>写出图中点的坐标，以及原点到该点的晶向指数。再换一个原点做一遍。</b></div>
+    <div class="grid2x" style="margin-top:12px">
+      <div class="fig"><svg id="ex3" viewBox="0 0 560 430"></svg></div>
+      <div>
+        <div class="row"><span class="lbl">原点</span>
+          <button class="btn sm on" id="ex3O1">后左下角</button>
+          <button class="btn sm" id="ex3O2">前右角 (=1,1,0)</button></div>
+        <div class="eq" id="ex3Read" style="margin-top:10px"></div>
+        <details><summary>查看解析</summary><div class="body">
+          <ol class="step">
+            <li><b>数格子。</b>把原点到该点的位移分解到三条轴上：<span class="m">x:½</span>、<span class="m">y:⅔</span>、<span class="m">z:½</span>。</li>
+            <li><b>点 = <span class="m">(½, ⅔, ½)</span></b>。点不化简，原样写。</li>
+            <li><b>方向的写法要「去分数」。</b>三个分母 2、3、2 的最小公倍数是 <b>6</b>，整体乘 6：
+              <span class="m">(½,⅔,½)×6 = (3,4,3)</span>，所以晶向是 <span class="m">[343]</span>。</li>
+            <li><b>换原点。</b>把原点挪到前右角后，该点的新坐标 = 旧坐标 − <span class="m">(1,1,0)</span> =
+              <span class="m">(−½, −⅓, ½)</span>，乘 6 得 <span class="m">[<span class="bar">3</span><span class="bar">2</span>3]</span>。
+              同一个方向、同一个点，只是换了参照系。</li>
+          </ol>
+        </div></details>
+        <details><summary>举一反三</summary><div class="body">
+          <p style="font-size:13.5px;margin:0 0 8px">若要写出点 <span class="m">(⅓, ¼, ½)</span> 所在的方向，最小公倍数是多少？指数是什么？</p>
+          <div class="row"><button class="btn sm" data-try-ex3="12,4,3,6">看答案：LCM=12</button></div>
+          <div class="hint" id="ex3Hint"></div>
+        </div></details>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<section class="page" id="s8d" data-title="例 4 · 两个方向的公共晶面" data-nav="例 4 · 公共晶面" data-group="例题精讲">
+  <div class="hd"><span class="idx">13</span><h2>例 4 · 两个方向的公共晶面</h2></div>
+  <div class="card">
+    <div class="row"><b>画出 <span class="m">[<span class="bar">1</span>00]</span> 与 <span class="m">[010]</span>，并写出同时包含这两个方向的晶面指数。</b></div>
+    <div class="grid2x" style="margin-top:12px">
+      <div class="fig"><svg id="ex4" viewBox="0 0 560 430"></svg></div>
+      <div>
+        <div class="row"><span class="lbl">步骤</span>
+          <button class="btn sm on" id="ex4S1">① 两个晶向</button>
+          <button class="btn sm" id="ex4S2">② 公共平面</button>
+          <button class="btn sm" id="ex4S3">③ 检验</button></div>
+        <details open><summary>查看解析</summary><div class="body">
+          <ol class="step">
+            <li><b>画法。</b><span class="m">[<span class="bar">1</span>00]</span> 要往 <span class="m">−x</span> 走一格，
+              会<b>伸出晶胞外</b>——没关系，后面还有一模一样的一格，所以在某一格晶胞里它看起来就是从
+              前左下角出发的。平移到本晶胞里画即可。</li>
+            <li><b>找公共平面。</b>两个方向都躺在「地板」上，所以平面与 x 轴、y 轴<b>平行</b> →
+              <span class="m">h=∞</span>、<span class="m">k=∞</span>；与 z 轴交于 0（由平移，0 也相当于 1）→
+              <span class="m">l=1</span>。</li>
+            <li><b>取倒数。</b><span class="m">1/∞=0</span>、<span class="m">1/1=1</span>，得 <span class="m">(001)</span>。</li>
+            <li><b>检验。</b>立方晶系里 <span class="m">[001]</span> 应垂直于 <span class="m">(001)</span>。
+              图上画一下 <span class="m">[001]</span>，确实垂直立在地板上。✓</li>
+          </ol>
+        </div></details>
+        <details><summary>举一反三</summary><div class="body">
+          <p style="font-size:13.5px;margin:0 0 8px">下面几组方向，各自唯一确定一个平面吗？</p>
+          <div class="row"><button class="btn sm" data-try-ex4="1,1,0|0,0,1|100">[110] 与 [001] → ?</button>
+            <button class="btn sm" data-try-ex4="1,1,1|0,0,1|1-10">[111] 与 [001] → ?</button></div>
+          <div class="hint" id="ex4Hint"></div>
+        </div></details>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<section class="page" id="s8e" data-title="例 5 · (110) 与 (220)" data-group="例题精讲">
+  <div class="hd"><span class="idx">14</span><h2>例 5 · (110) 与 (220)</h2></div>
+  <div class="card">
+    <div class="row"><b>画出 <span class="m">(110)</span> 和 <span class="m">(220)</span> 两个晶面。</b></div>
+    <div class="grid2x" style="margin-top:12px">
+      <div class="fig"><svg id="ex5" viewBox="0 0 560 430"></svg></div>
+      <div>
+        <details open><summary>查看解析</summary><div class="body">
+          <ol class="step">
+            <li><b>用倒易规则读截距。</b><span class="m">(110)</span>：<span class="m">1/1=1</span>，
+              在 x 轴和 y 轴上都交于 1，与 z 轴平行。<span class="m">(220)</span>：<span class="m">1/2=½</span>，
+              在 x 轴、y 轴上都交于 ½，同样平行于 z 轴。</li>
+            <li><b>画出来。</b>两个面都是竖直的矩形面，互相<b>平行</b>。</li>
+            <li><b>关键区别。</b>它们平行但<b>不重合</b>。如果原子正好待在
+              <span class="m">(0, ½, ½)</span> 这个位置，它会落在 <span class="m">(220)</span> 面上，
+              却不在 <span class="m">(110)</span> 面上——衍射实验里这个差别能被测出来。</li>
+          </ol>
+        </div></details>
+        <details><summary>举一反三</summary><div class="body">
+          <div class="hint" style="margin:0">间隔规律：<span class="m">(100)</span> 与 <span class="m">(200)</span>、
+            <span class="m">(110)</span> 与 <span class="m">(220)</span>、<span class="m">(111)</span> 与 <span class="m">(222)</span>……
+            指数整体乘 <span class="m">n</span>，面间距就变成 <span class="m">1/n</span>，面本身不动方向。</div>
+        </div></details>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<section class="page" id="s8f" data-title="例 6 · 六方晶格中的 [110] 与 (110)" data-nav="例 6 · 六方晶格" data-group="例题精讲">
+  <div class="hd"><span class="idx">15</span><h2>例 6 · 六方晶格中的 [110] 与 (110)</h2></div>
+  <div class="card">
+    <div class="row"><b>在<b>六方</b>晶格中画出 <span class="m">[110]</span> 方向与 <span class="m">(110)</span> 晶面。</b></div>
+    <div class="grid2x" style="margin-top:12px">
+      <div class="fig"><svg id="ex6" viewBox="0 0 560 430"></svg></div>
+      <div>
+        <div class="hint">图上标的 θ 是底面上 <span class="m"><span class="i">a</span><sub>1</sub></span> 与
+          <span class="m"><span class="i">a</span><sub>2</sub></span> 的夹角。</div>
+        <details open><summary>查看解析</summary><div class="body">
+          <ol class="step">
+            <li><b>六个指数要一起看。</b>六方的 <span class="m"><span class="i">a</span><sub>1</sub></span>、
+              <span class="m"><span class="i">a</span><sub>2</sub></span> 夹角不是 90° 而是 <b>120°</b>，
+              所以 <span class="m">[110]</span> 不是「向右斜上」，而是
+              <span class="m">a<sub>1</sub>+a<sub>2</sub></span> 的合成——方向恰好落在两条轴的<b>正中间</b>。</li>
+            <li><b>方向。</b><span class="m">a<sub>1</sub></span> 走 1 步、<span class="m">a<sub>2</sub></span> 走 1 步，
+              合矢量就是 <span class="m">[110]</span>。</li>
+            <li><b>晶面。</b>在 <span class="m">a<sub>1</sub></span>、<span class="m">a<sub>2</sub></span> 上都交于 1，
+              与 <span class="m"><span class="i">c</span></span> 轴平行，取倒数得 <span class="m">(110)</span>。
+              在俯视图里，这条面迹<b>连接两条轴的端点</b>，与 <span class="m">[110]</span> 恰好垂直。</li>
+            <li><b>注意。</b>六方里晶面与同名晶向<b>垂直</b>这件事不再自动成立，
+              严谨做法要换成四指数 <span class="m">(hkil)</span> 体系。</li>
+          </ol>
+        </details>
+        <details><summary>举一反三</summary><div class="body">
+          <div class="row"><button class="btn sm" id="ex6Toggle">切换：显示/隐藏 (110) 面迹</button>
+            <button class="btn sm" id="ex6Axes">切换：显示/隐藏 a₃ 轴</button></div>
+          <div class="hint" id="ex6Hint">试试关掉 a₃ 轴看方向，再打开对照——[110] 正好沿着 −a₃ 的反方向吗？</div>
+        </div></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="s9" data-title="自测练习">
+  <div class="hd"><span class="idx">16</span><h2>自测练习</h2></div>
+  <p class="lead">题目随机生成，写完点「检查」当场判分，卡住了就看答案。</p>
+
+  <div class="card">
+    <div class="row">
+      <button class="btn sm on" id="qDir">看图写晶向</button>
+      <button class="btn sm" id="qPlane">看图写晶面</button>
+      <span class="pill"><span class="k">连对</span><b id="qStreak">0</b></span>
+      <span class="pill"><span class="k">得分</span><b id="qScore">0 / 0</b></span>
+    </div>
+    <div class="grid2x" style="margin-top:14px">
+      <div class="fig"><svg id="svgQuiz" viewBox="0 0 560 430"></svg></div>
+      <div>
+        <div id="qPrompt" style="font-size:14px;margin-bottom:10px"></div>
+        <div class="row" id="qInputs"></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn pri sm" id="qCheck">检查</button>
+          <button class="btn sm" id="qShow">看答案</button>
+          <button class="btn sm" id="qNext">下一题</button>
+        </div>
+        <div id="qFeed" style="margin-top:12px;font-size:14px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="pager" id="pager">
+  <div class="pgbar">
+    <button class="btn sm" id="pgPrev" title="上一页（← / PageUp）">‹ 上一页</button>
+    <div class="pgind">
+      <b id="pgNow">1</b><span>/</span><b id="pgTot">16</b>
+      <span class="pgtitle" id="pgTitle"></span>
+    </div>
+    <button class="btn sm" id="pgNext" title="下一页（→ / PageDown）">下一页 ›</button>
+  </div>
+  <div class="hint" style="text-align:center;margin-top:7px">
+    <kbd>←</kbd> <kbd>→</kbd> 翻页 · 拖动图面旋转 · 滚轮缩放 · 双击复位
+  </div>
+</div>
+</main>
+</div>
+
+<footer><div class="wrap"><div>交互教学页 · 内容依据 Miller Indices for Crystal Directions and Planes 整理</div></div></footer>
+<script>
+/* ============================================================
+   1. 基础工具
+   ============================================================ */
+const NS = 'http://www.w3.org/2000/svg';
+function mk(tag, attr, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attr) e.setAttribute(k, attr[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function clearSvg(svg) { while (svg.firstChild) svg.removeChild(svg.firstChild); }
+/* 在 SVG 里插入 HTML 片段（必须用 HTML 命名空间，否则不渲染） */
+function hdiv(parent, css, html) {
+  const fo = mk('foreignObject', { x: 0, y: 0, width: 10, height: 10 }, parent);
+  const d = document.createElement('div');
+  d.setAttribute('style', css);
+  if (html !== undefined) d.innerHTML = html;
+  fo.appendChild(d);
+  return fo;
+}
+function placeFO(fo, cx, cy, w, h) {
+  fo.setAttribute('x', cx - w / 2); fo.setAttribute('y', cy - h / 2);
+  fo.setAttribute('width', w); fo.setAttribute('height', h);
+  const d = fo.firstChild;
+  d.style.width = w + 'px'; d.style.height = h + 'px';
+  return fo;
+}
+/* 图内标签的统一样式：行高 = 盒子高度，行盒会把内容垂直居中；
+   盒子必须留够高度，否则分数（上下两行）会被 foreignObject 裁掉。 */
+const FO_H = 56;
+function $(id) { return document.getElementById(id); }
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { const t = a % b; a = b; b = t; } return a || 1; }
+function lcm(a, b) { return Math.abs(a * b) / gcd(a, b); }
+
+/* 解析用户输入：'inf' '∞' 为无穷；支持 'a/b' 分数、'-3'、'0.25' */
+function parseNum(s) {
+  if (s === null || s === undefined) return NaN;
+  s = String(s).trim().toLowerCase();
+  if (s === '' || s === 'inf' || s === '∞' || s === 'infinity') return Infinity;
+  if (s.includes('/')) {
+    const [a, b] = s.split('/');
+    const x = parseFloat(a), y = parseFloat(b);
+    return (Math.abs(y) > 1e-12) ? x / y : Infinity;
+  }
+  return parseFloat(s);
+}
+function fmtDen(x) { // 分数的最小分母（用于化简）
+  for (let d = 1; d <= 60; d++) if (Math.abs(x * d - Math.round(x * d)) < 1e-9) return d;
+  return 1;
+}
+/* 把 -3 显示成带上划线的 3 */
+function barNum(n) { return n < 0 ? '<span class="bar">' + Math.abs(n) + '</span>' : String(n); }
+function idxStr(arr) { return '<span class="m">' + arr.map(barNum).join('') + '</span>'; }
+function idxStrBr(arr, l, r) { return '<span class="m">' + l + arr.map(barNum).join('') + r + '</span>'; }
+/* 分数显示。
+   默认用「上划线表示负号」（晶向 / 晶面的惯例）；
+   传 useBar=false 则用普通负号（描述「点」时的惯例）。
+   分母化简不出来时（如 0.1234）退化为小数，避免被四舍五入成 0。 */
+function fracHTML(x, useBar) {
+  if (useBar === undefined) useBar = true;
+  if (!isFinite(x)) return '<span class="m">∞</span>';
+  const neg = x < 0, ax = Math.abs(x);
+  const d = fmtDen(ax), num = Math.round(ax * d);
+  const exact = d <= 60 && Math.abs(num / d - ax) < 1e-9;
+  let body;
+  if (!exact) body = String(Math.round(ax * 1000) / 1000);
+  else if (d === 1) body = String(num);
+  else body = '<span class="frac"><i>' + num + '</i><s>' + d + '</s></span>';
+  if (neg && useBar) {
+    body = exact && d > 1
+      ? '<span class="frac"><i><span class="bar">' + num + '</span></i><s>' + d + '</s></span>'
+      : '<span class="bar">' + body + '</span>';
+  }
+  return '<span class="m">' + (neg && !useBar ? '−' : '') + body + '</span>';
+}
+
+/* ============================================================
+   2. 晶体学投影（x 指向观察者左下 / y 向右 / z 向上）
+   ============================================================ */
+const CORNERS = [[0,0,0],[1,0,0],[0,1,0],[1,1,0],[0,0,1],[1,0,1],[0,1,1],[1,1,1]];
+const EDGES = [[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
+const C_AXIS = 'var(--axis)', C_DIM = 'var(--dim)', C_GHOST = 'var(--ghost)';
+
+/* ============================================================
+   2b. 可旋转相机（正交投影）——所有立体图共用
+   ============================================================ */
+const VIEW0 = () => ({ az: 30, el: 25, zoom: 1, panX: 0, panY: 0, rot: 0 });
+function camBasis(az, el) {
+  const a = az * Math.PI / 180, e = el * Math.PI / 180;
+  return {
+    n: [Math.cos(e) * Math.cos(a), Math.cos(e) * Math.sin(a), Math.sin(e)],  // 相机方向
+    r: [-Math.sin(a), Math.cos(a), 0],                                      // 屏幕向右
+    u: [-Math.sin(e) * Math.cos(a), -Math.sin(e) * Math.sin(a), Math.cos(e)] // 屏幕上向
+  };
+}
+function dot3(a, b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function norm3(v) { const L = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0]/L, v[1]/L, v[2]/L]; }
+function cross3(a, b) { return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+/* 内容包围盒（晶胞 + 三条轴箭头 + 负轴短桩），用于自动取景 */
+const BOUNDS_DEF = [[-0.40, 1.15], [-0.40, 1.15], [-0.40, 1.05]];
+
+function scene(svg, opt) {
+  opt = Object.assign({ sx: 1, sy: 1, sz: 1, axLen: 1.10, fill: 1.05, cyShift: 0 }, opt || {});
+  const view = opt.view || svg.__view || VIEW0();
+  const vb = (svg.getAttribute('viewBox') || '0 0 560 430').split(/[\s,]+/).map(Number);
+  const vbW = vb[2] || 560, vbH = vb[3] || 430;
+  const cam = camBasis(view.az, view.el);
+  const B = opt.bounds || BOUNDS_DEF;
+  const ctr = [0,1,2].map(i => (B[i][0] + B[i][1]) / 2);
+  const R = Math.hypot((B[0][1]-ctr[0])*opt.sx, (B[1][1]-ctr[1])*opt.sy, (B[2][1]-ctr[2])*opt.sz);
+  const s = opt.s || (Math.min(vbW, vbH) * opt.fill / (2 * R));
+  const cx = vbW / 2, cy = vbH / 2 + opt.cyShift;
+  const cR = Math.cos(view.rot * Math.PI / 180), sR = Math.sin(view.rot * Math.PI / 180);
+  const P = p => {
+    const q = [(p[0]-ctr[0])*opt.sx, (p[1]-ctr[1])*opt.sy, (p[2]-ctr[2])*opt.sz];
+    let x = dot3(cam.r, q), y = -dot3(cam.u, q);
+    if (view.rot) { const t = x*cR - y*sR; y = x*sR + y*cR; x = t; }
+    return [cx + view.panX + s*view.zoom*x, cy + view.panY + s*view.zoom*y];
+  };
+  // 被遮挡的顶点 = 离相机最远的那一个，它牵连的 3 条棱画虚线
+  let hidIdx = 0, worst = Infinity;
+  CORNERS.forEach((c, i) => { const d = dot3(cam.n, c); if (d < worst) { worst = d; hidIdx = i; } });
+  const S = { opt, P, svg, layers: {}, cam, view, ctr, s };
+
+  ['cube', 'axes', 'content', 'ui'].forEach(n => S.layers[n] = mk('g', {}, svg));
+  const g = () => S.layers.content;
+
+  S.line = (a, b, st, parent) => mk('line', {
+    x1: P(a)[0], y1: P(a)[1], x2: P(b)[0], y2: P(b)[1], style: st
+  }, parent || g());
+  S.dot = (p, r, fill, parent) => mk('circle', {
+    cx: P(p)[0], cy: P(p)[1], r: r || 4, style: 'fill:' + fill + ';stroke:none'
+  }, parent || g());
+  S.txt = (p, t, st, dx, dy, parent) => {
+    const e = mk('text', {
+      x: P(p)[0] + (dx || 0), y: P(p)[1] + (dy || 0),
+      style: st || 'fill:var(--fg);font-size:13px', 'text-anchor': 'middle',
+      'dominant-baseline': 'middle'
+    }, parent || g());
+    e.textContent = t; return e;
+  };
+  S.html = (p, h, dx, dy, parent) => { // 需要分数/上划线的用 foreignObject
+    const P0 = P(p);
+    const fo = hdiv(parent || g(),
+      'font-size:14px;text-align:center;color:var(--fg);line-height:' + FO_H + 'px;white-space:nowrap',
+      h);
+    return placeFO(fo, P0[0] + (dx || 0), P0[1] + (dy || 0), 200, FO_H);
+  };
+  S.htmlAt = (x, y, h, css, parent) => {
+    const fo = hdiv(parent || g(), 'font-size:13.5px;text-align:center;color:var(--fg);line-height:' + FO_H + 'px;white-space:nowrap' +
+      (css ? ';' + css : ''), h);
+    return placeFO(fo, x, y, 230, FO_H);
+  };
+  S.arrow = (a, b, color, w, parent) => {
+    const A = P(a), B = P(b), L = Math.hypot(B[0] - A[0], B[1] - A[1]) || 1;
+    const sz = 9, ux = (B[0] - A[0]) / L, uy = (B[1] - A[1]) / L;
+    const tip = [B[0] - ux * sz * 0.92, B[1] - uy * sz * 0.92];
+    mk('line', {
+      x1: A[0], y1: A[1], x2: tip[0], y2: tip[1],
+      style: 'stroke:' + color + ';stroke-width:' + (w || 2.4) + ';stroke-linecap:round'
+    }, parent || g());
+    const bx = B[0] - ux * sz, by = B[1] - uy * sz, px = -uy, py = ux, s2 = sz * 0.4;
+    mk('polygon', {
+      points: [[B[0], B[1]], [bx + px * s2, by + py * s2], [bx - px * s2, by - py * s2]]
+        .map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '),
+      style: 'fill:' + color + ';stroke:none'
+    }, parent || g());
+  };
+  S.cube = (st, parent, off) => {
+    off = off || [0, 0, 0];
+    const ghost = !!st;   // 传了颜色 = 邻胞，整体虚线
+    const v = CORNERS.map(c => [c[0] + off[0], c[1] + off[1], c[2] + off[2]]);
+    EDGES.forEach(([a, b]) => {
+      const hid = ghost || a === hidIdx || b === hidIdx;
+      mk('line', {
+        x1: P(v[a])[0], y1: P(v[a])[1], x2: P(v[b])[0], y2: P(v[b])[1],
+        style: 'stroke:' + (hid ? C_GHOST : C_AXIS) + ';stroke-width:' + (hid ? 1.1 : 1.5) +
+          (hid ? ';stroke-dasharray:4 3' : '')
+      }, parent || S.layers.cube);
+    });
+  };
+  S.axes = () => {
+    const L = opt.axLen, gA = S.layers.axes;
+    const ax = [[[L,0,0],'x'], [[0,L,0],'y'], [[0,0,L],'z']];
+    ax.forEach(([d, name]) => {
+      const L2 = name === 'z' ? Math.min(L, 1.04) : L;
+      S.arrow([0,0,0], [d[0]*(L2/L), d[1]*(L2/L), d[2]], C_AXIS, 1.4, gA);
+      const t = P([d[0]*(L2/L)*1.10, d[1]*(L2/L)*1.10, d[2]*1.10]);
+      mk('text', { x: t[0], y: t[1], style: 'fill:var(--dim);font-size:13px;font-style:italic', 'text-anchor': 'middle' }, gA).textContent = name;
+      const d2 = name === 'z' ? [0,0,-0.32] : [d[0]*-0.32, d[1]*-0.32, 0];
+      mk('line', {
+        x1: P([0,0,0])[0], y1: P([0,0,0])[1], x2: P(d2)[0], y2: P(d2)[1],
+        style: 'stroke:' + C_GHOST + ';stroke-width:1;stroke-dasharray:3 3'
+      }, gA);
+    });
+    S.dot([0,0,0], 3.4, C_AXIS, gA);
+  };
+  return S;
+}
+
+/* 平面与晶胞相交得到的多边形（3D 点集，已按投影角度排序） */
+function planePoly(h, k, l, d) {
+  const pts = [], n = [h, k, l];
+  const f = p => n[0]*p[0] + n[1]*p[1] + n[2]*p[2] - d;
+  EDGES.forEach(([ia, ib]) => {
+    const A = CORNERS[ia], B = CORNERS[ib], fa = f(A), fb = f(B);
+    if (Math.abs(fa) < 1e-9) pts.push(A.slice());
+    if (Math.abs(fb) < 1e-9) pts.push(B.slice());
+    if (fa * fb < 0) {
+      const t = fa / (fa - fb);
+      pts.push([A[0]+t*(B[0]-A[0]), A[1]+t*(B[1]-A[1]), A[2]+t*(B[2]-A[2])]);
+    }
+  });
+  const uniq = [];
+  pts.forEach(p => { if (!uniq.some(q => Math.hypot(q[0]-p[0], q[1]-p[1], q[2]-p[2]) < 1e-6)) uniq.push(p); });
+  if (uniq.length < 3) return null;
+  const c = uniq.reduce((a, p) => [a[0]+p[0]/uniq.length, a[1]+p[1]/uniq.length, a[2]+p[2]/uniq.length], [0,0,0]);
+  // 用平面自身的法向建立平面内正交基来排序 —— 与视角无关，任意方位都稳定
+  const nn = norm3([h, k, l]);
+  let e1 = Math.abs(nn[2]) < 0.9 ? cross3([0,0,1], nn) : cross3([1,0,0], nn);
+  e1 = norm3(e1);
+  const e2 = cross3(nn, e1);
+  const rel = p => [p[0]-c[0], p[1]-c[1], p[2]-c[2]];
+  const ang = p => { const q = rel(p); return Math.atan2(dot3(q, e2), dot3(q, e1)); };
+  uniq.sort((p, q) => ang(p) - ang(q));
+  const pr = uniq.map(p => { const q = rel(p); return [dot3(q, e1), dot3(q, e2)]; });
+  let area = 0;
+  for (let i = 0; i < pr.length; i++) {
+    const a = pr[i], b = pr[(i+1) % pr.length];
+    area += a[0]*b[1] - b[0]*a[1];
+  }
+  return { pts: uniq, area: Math.abs(area / 2) };
+}
+/* 挑一个能真正切进晶胞的 d（负指数时自动平移到等价晶胞） */
+function pickD(h, k, l, dPref) {
+  const n = [h, k, l];
+  const vs = CORNERS.map(p => n[0]*p[0] + n[1]*p[1] + n[2]*p[2]);
+  const lo = Math.min.apply(null, vs), hi = Math.max.apply(null, vs);
+  const cands = [1, 0, 2, -1, 3, -2, 4, -3, 5, -4, 6, -5];
+  if (dPref !== undefined && dPref !== null) {
+    const i = cands.indexOf(dPref);
+    if (i > 0) { cands.splice(i, 1); cands.unshift(dPref); }
+    else if (i < 0) cands.unshift(dPref);
+  }
+  for (let i = 0; i < cands.length; i++) {
+    const d = cands[i];
+    if (d < lo - 1e-9 || d > hi + 1e-9) continue;
+    const r = planePoly(h, k, l, d);
+    if (r && r.area > 0.035) return d;
+  }
+  return (lo + hi) / 2;
+}
+
+/* 画一个晶面 */
+function drawPlane(S, h, k, l, color, alpha, label, labelPos, dPref) {
+  const d = pickD(h, k, l, dPref), r = planePoly(h, k, l, d);
+  if (!r) return;
+  const pts2 = r.pts.map(p => S.P(p));
+  mk('polygon', {
+    points: pts2.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '),
+    style: 'fill:' + color + ';fill-opacity:' + (alpha === undefined ? 0.22 : alpha) +
+      ';stroke:' + color + ';stroke-width:1.8;stroke-linejoin:round'
+  }, S.layers.content);
+  if (label) {
+    const c = r.pts.reduce((a, p) => [a[0]+p[0]/r.pts.length, a[1]+p[1]/r.pts.length, a[2]+p[2]/r.pts.length], [0,0,0]);
+    const p = labelPos || c;
+    const t = S.P(p);
+    S.htmlAt(t[0], t[1] - 14, label, 'color:' + color + ';font-weight:700');
+  }
+  return r;
+}
+
+/* 线段是否真的穿过某个邻胞（不是只擦到边界）——用参数区间裁剪判断。
+   线段某条轴上没有分量时用半开区间约定，避免把共享一个面的两个胞都算进来。 */
+function segHitsCell(A, B, o) {
+  let t0 = 0, t1 = 1;
+  for (let i = 0; i < 3; i++) {
+    const d = B[i] - A[i];
+    if (Math.abs(d) < 1e-12) {
+      if (o[i] !== Math.floor(A[i] + 1e-9)) return false;
+      continue;
+    }
+    let u0 = (o[i] - A[i]) / d, u1 = (o[i] + 1 - A[i]) / d;
+    if (u0 > u1) { const t = u0; u0 = u1; u1 = t; }
+    t0 = Math.max(t0, u0); t1 = Math.min(t1, u1);
+    if (t0 > t1) return false;
+  }
+  return (t1 - t0) > 1e-6;
+}
+/* 画一个晶向（含负指数需要的「邻胞」虚线框） */
+function drawDir(S, u, v, w, color, label, from, ghost) {
+  from = from || [0, 0, 0];
+  const to = [from[0]+u, from[1]+v, from[2]+w];
+  if (ghost !== false) {
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+      if (!dx && !dy && !dz) continue;
+      if (segHitsCell(from, to, [dx, dy, dz])) S.cube(C_GHOST, S.layers.cube, [dx, dy, dz]);
+    }
+  }
+  S.arrow(from, to, color, 2.6);
+  S.dot(to, 3.6, color);
+  if (label) {
+    const t = S.P(to);
+    S.htmlAt(t[0], t[1] - 32, label, 'color:' + color + ';font-weight:700');
+  }
+}
+
+/* ============================================================
+   3. 第一节：记号速查（() [] <>  { } 的差别）
+   ============================================================ */
+const C1 = 'var(--accent)', C2 = 'var(--accent2)';
+function drawNota(kind) {
+  if (kind) NOTA = kind; kind = NOTA;
+  const svg = $('svgNota'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  const hints = {
+    pt: '(1,1,1) 用圆括号 + 逗号，指<b>一个点</b>——原点的对角顶点。点不化简分数。',
+    dir: '[111] 用方括号，指<b>一个晶向</b>——从原点出发穿过体心、指向对角顶点的方向。',
+    fam: '&lt;111&gt; 用尖括号，指<b>一族晶向</b>——立方晶胞的全部 8 条体对角线，物理上完全等价。',
+    pl: '(111) 用圆括号，指<b>一个晶面</b>——它截掉晶胞的 (1,1,1) 那个角，交出等边三角形。',
+    pfl: '{111} 用花括号，指<b>一族晶面</b>——立方晶胞里共有 4 个 {111} 型面，各截掉一个角。'
+  };
+  if (kind === 'pt') {
+    S.dot([1,1,1], 5, C2);
+    S.html([1,1,1], '<span class="m">(1,1,1)</span>', 48, -26);
+  } else if (kind === 'dir') {
+    drawDir(S, 1, 1, 1, C1, '&nbsp;[111]');
+  } else if (kind === 'fam') {
+    const body = [];
+    [-1,1].forEach(a => [-1,1].forEach(b => [-1,1].forEach(c => body.push([a,b,c]))));
+    body.forEach(v => drawDir(S, v[0], v[1], v[2], C1, null));
+    S.html([0,0,0], '<span class="m">&lt;111&gt; · 8 条</span>', -6, -268);
+  } else if (kind === 'pl') {
+    drawPlane(S, 1, 1, 1, C1, 0.26, '(111)');
+  } else if (kind === 'pfl') {
+    [[1,1,1], [-1,1,1], [1,-1,1], [1,1,-1]].forEach((n, i) => {
+      drawPlane(S, n[0], n[1], n[2], i === 0 ? C1 : C2, 0.18, null);
+    });
+    S.html([0,0,0], '<span class="m">{111} · 4 个面</span>', -6, -268);
+  }
+  $('notaHint').innerHTML = hints[kind];
+}
+document.querySelectorAll('[data-nota]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('[data-nota]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); drawNota(b.dataset.nota);
+});
+
+/* ============================================================
+   4. 第二节：坐标系（立方 / 六方）
+   ============================================================ */
+function drawCoord() {
+  const svg = $('svgCoord'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  S.dot([1,1,1], 5, C2);
+  S.html([1,1,1], '<span class="m">(1,1,1)</span>', 48, -26);
+  S.html([0,0,0], '<span class="m">(0,0,0)</span> 原点', -34, 26);
+}
+function drawHexTop() {
+  const svg = $('svgHexTop'); clearSvg(svg);
+  const cx = 275, cy = 205, R = 132;
+  const rot = (deg, r) => [cx + r * Math.cos(deg * Math.PI / 180), cy - r * Math.sin(deg * Math.PI / 180)];
+  const hex = [];
+  for (let i = 0; i < 6; i++) hex.push(rot(60 * i, R));
+  mk('polygon', { points: hex.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '),
+    style: 'fill:var(--panel);fill-opacity:.5;stroke:var(--axis);stroke-width:1.5' }, svg);
+  const A1 = rot(0, R), A2 = rot(120, R), A3 = rot(240, R);
+  mk('polygon', { points: [[cx,cy], A1, rot(60,R), A2].map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '),
+    style: 'fill:' + C1 + ';fill-opacity:.10;stroke:var(--ghost);stroke-width:1;stroke-dasharray:4 3' }, svg);
+  const arrow2 = (to, color, label) => {
+    mk('line', { x1: cx, y1: cy, x2: to[0], y2: to[1],
+      style: 'stroke:' + color + ';stroke-width:2.4;stroke-linecap:round' }, svg);
+    const ux = (to[0]-cx)/R, uy = (to[1]-cy)/R, sz = 10;
+    const bx = to[0]-ux*sz, by = to[1]-uy*sz, px = -uy, py = ux;
+    mk('polygon', { points: [[to[0],to[1]],[bx+px*4,by+py*4],[bx-px*4,by-py*4]]
+      .map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '), style: 'fill:' + color }, svg);
+    const t = mk('text', { x: to[0]+ux*30, y: to[1]+uy*30,
+      style: 'font-size:14px;font-weight:600;text-anchor:middle;fill:' + color }, svg);
+    t.innerHTML = label;
+  };
+  arrow2(A1, C1, 'a₁'); arrow2(A2, C1, 'a₂'); arrow2(A3, C_DIM, 'a₃');
+  const p0 = rot(0, 48), p1 = rot(120, 48);
+  mk('path', { d: 'M ' + p0[0].toFixed(1) + ' ' + p0[1].toFixed(1) + ' A 48 48 0 0 0 ' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1),
+    style: 'fill:none;stroke:var(--accent2);stroke-width:1.2' }, svg);
+  const mid = rot(60, 64);
+  mk('text', { x: cx + 35, y: cy - 20, style: 'font-size:13px;fill:var(--accent2);font-weight:600;text-anchor:middle' }, svg).textContent = '120°';
+  const base = rot(60, R);
+  mk('circle', { cx: base[0], cy: base[1], r: 4.5, style: 'fill:' + C2 + ';stroke:none' }, svg);
+  mk('line', { x1: base[0], y1: base[1], x2: base[0]+46, y2: base[1]-46,
+    style: 'stroke:' + C2 + ';stroke-width:2;stroke-dasharray:5 4' }, svg);
+  mk('text', { x: base[0]+54, y: base[1]-50, style: 'font-size:13.5px;fill:' + C2 + ';font-weight:600' }, svg)
+    .innerHTML = '＋ c 向上 = (1,1,1)';
+  mk('text', { x: base[0]+4, y: base[1]+24, style: 'font-size:13.5px;fill:' + C2 + ';font-weight:600;text-anchor:middle' }, svg)
+    .innerHTML = 'a₁＋a₂';
+  mk('text', { x: cx, y: 380, style: 'font-size:13px;fill:var(--dim);text-anchor:middle' }, svg)
+    .textContent = '六方底面俯视图：a₁ 与 a₂ 夹角 120°，c 垂直于底面';
+  if (svg.__view) wrapView(svg, svg.__view, cx, cy);
+}
+$('btnCubic').onclick = () => {
+  $('btnCubic').classList.add('on'); $('btnHex').classList.remove('on');
+  $('wrapCoord').style.display = ''; $('wrapHex').style.display = 'none';
+};
+$('btnHex').onclick = () => {
+  $('btnHex').classList.add('on'); $('btnCubic').classList.remove('on');
+  $('wrapCoord').style.display = 'none'; $('wrapHex').style.display = '';
+};
+
+/* ============================================================
+   5. 第三节：晶格中的点
+   ============================================================ */
+function drawPt(x, y, z) {
+  const svg = $('svgPt'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  const ok = [x, y, z].every(v => isFinite(v));
+  const out = [x, y, z].some(v => v < -1.001 || v > 1.001);
+  if (ok) {
+    S.line([0,0,0], [x,0,0], 'stroke:' + C2 + ';stroke-width:1.4;stroke-dasharray:4 3;opacity:.85');
+    S.line([x,0,0], [x,y,0], 'stroke:' + C2 + ';stroke-width:1.4;stroke-dasharray:4 3;opacity:.85');
+    S.line([x,y,0], [x,y,z], 'stroke:' + C2 + ';stroke-width:1.4;stroke-dasharray:4 3;opacity:.85');
+    S.dot([x,y,z], 5.5, C2);
+    S.html([x,y,z], '<span class="m">(' + fracHTML(x, false) + ', ' + fracHTML(y, false) + ', ' + fracHTML(z, false) + ')</span>', 56, -24);
+  }
+  const isCenter = Math.abs(x-.5) < 1e-9 && Math.abs(y-.5) < 1e-9 && Math.abs(z-.5) < 1e-9;
+  const isCorner = Math.abs(x-1) < 1e-9 && Math.abs(y-1) < 1e-9 && Math.abs(z-1) < 1e-9;
+  $('ptRead').innerHTML = !ok ? '<span class="bad">请输入有效数字</span>' :
+    '<span class="lbl">点坐标</span><span class="m">( ' + fracHTML(x, false) + ' , ' + fracHTML(y, false) + ' , ' + fracHTML(z, false) + ' )</span>' +
+    (isCenter ? '<span class="tag a">体心 (½,½,½)</span>' : '') +
+    (isCorner ? '<span class="tag a">对角顶点 (1,1,1)</span>' : '') +
+    (out ? '<span class="tag b">伸出晶胞——允许，邻胞完全重复</span>' : '');
+}
+function readPt() {
+  drawPt(parseNum($('ptx').value), parseNum($('pty').value), parseNum($('ptz').value));
+}
+['ptx','pty','ptz'].forEach(id => $(id).addEventListener('input', readPt));
+/* ============================================================
+   6. 第四节：晶向实验区（含分数化简公式）
+   ============================================================ */
+function drawDirLab() {
+  const u = parseNum($('dirU').value), v = parseNum($('dirV').value), w = parseNum($('dirW').value);
+  const svg = $('svgDir'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  const ok = [u,v,w].every(isFinite) && !(u === 0 && v === 0 && w === 0);
+  if (ok) drawDir(S, u, v, w, C1, null);
+  keepDirRange = [u, v, w];
+  const raw = '<span class="m">[ ' + fracHTML(u) + ' , ' + fracHTML(v) + ' , ' + fracHTML(w) + ' ]</span>';
+  if (!ok) {
+    $('dirFormula').innerHTML = '<span class="bad">请填写三个有效数字（不能全为 0）</span>';
+    $('dirHint').innerHTML = ''; return;
+  }
+  let L = 1;
+  [u, v, w].forEach(t => { L = lcm(L, fmtDen(t)); });
+  if (L > 60) L = 60;
+  const U = Math.round(u * L), V = Math.round(v * L), W = Math.round(w * L);
+  $('dirFormula').innerHTML =
+    '<span class="lbl">原始</span>' + raw +
+    '<span class="op">× ' + L + '</span>' +
+    '<span class="m">= [ ' + barNum(U) + ' , ' + barNum(V) + ' , ' + barNum(W) + ' ]</span>' +
+    '<span class="op">=</span>' +
+    '<span class="m" style="color:var(--accent);font-size:19px">[ ' + barNum(U) + ' ' + barNum(V) + ' ' + barNum(W) + ' ]</span>';
+  $('dirHint').innerHTML = '终点坐标 <span class="m">(' + fracHTML(u) + ', ' + fracHTML(v) + ', ' + fracHTML(w) + ')</span>；' +
+    '三个分母的最小公倍数是 <b>' + L + '</b>。' +
+    (U === u && V === v && W === w && L === 1 ? '已经是整数，无需化简。' : '');
+}
+let keepDirRange = [1, 1, 1];
+['dirU','dirV','dirW'].forEach(id => $(id).addEventListener('input', drawDirLab));
+document.querySelectorAll('[data-dir]').forEach(b => b.onclick = () => {
+  const v = b.dataset.dir.split(',');
+  $('dirU').value = v[0]; $('dirV').value = v[1]; $('dirW').value = v[2]; drawDirLab();
+});
+document.querySelectorAll('[data-neg]').forEach(b => b.onclick = () => {
+  const inp = $(b.dataset.neg);
+  let x = parseNum(inp.value);
+  if (!isFinite(x)) return;
+  inp.value = String(/^-/.test(inp.value.trim()) ? inp.value.trim().replace(/^-/, '') : '-' + inp.value.trim());
+  drawDirLab();
+});
+
+/* ============================================================
+   7. 第五节：晶面实验区（三步法）
+   ============================================================ */
+function drawPlaneLab() {
+  const a = parseNum($('icX').value), b = parseNum($('icY').value), c = parseNum($('icZ').value);
+  const svg = $('svgPlane'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  const inv = x => (isFinite(x) ? 1 / x : 0);
+  const ih = inv(a), ik = inv(b), il = inv(c);
+  // 化简到最简整数
+  let L = 1;
+  [ih, ik, il].forEach(t => { if (Math.abs(t) > 1e-9) L = lcm(L, fmtDen(t)); });
+  if (L > 60) L = 60;
+  const H = Math.round(ih * L), K = Math.round(ik * L), Ll = Math.round(il * L);
+  const zero = (H === 0 && K === 0 && Ll === 0);
+  if (!zero) drawPlane(S, H, K, Ll, C1, 0.24, null);
+  else S.html([0,0,0], '<span class="bad">三个截距都无穷大，无法定义晶面</span>', 0, -250);
+  // 截距显示
+  // 截距是「位置」，按惯例用普通负号
+  const iv2 = '<span class="m">( ' + [a,b,c].map(function(v){ return fracHTML(v, false); }).join(' , ') + ' )</span>';
+  // 倒数直接变成指数，按惯例用上划线表示负号
+  const rv = '<span class="m">( ' + [ih,ik,il].map(function(v){ return fracHTML(v, true); }).join(' , ') + ' )</span>';
+  $('planeFormula').innerHTML =
+    '<div class="eq"><span class="lbl" style="min-width:52px">截距</span>' + iv2 +
+      '<span class="op">— 取倒数 →</span>' + rv + '</div>' +
+    '<div class="eq" style="margin-top:8px"><span class="lbl" style="min-width:52px">晶面</span>' +
+      (L === 1 ? '<span class="op">已是整数，直接写出 →</span>' : '<span class="op">× ' + L + ' 化简 →</span>') +
+      '<span class="m" style="color:var(--accent);font-size:20px">( ' + barNum(H) + ' ' + barNum(K) + ' ' + barNum(Ll) + ' )</span></div>';
+  let note = '';
+  if (!isFinite(a) && !isFinite(b) && !isFinite(c)) note = '三个方向都平行于该面？这不能构成平面。';
+  else {
+    const parts = [];
+    if (!isFinite(a)) parts.push('与 x 轴<b>平行</b>（截距 ∞）→ h = 0');
+    else if (Math.abs(a) < 1e-9) parts.push('过原点 → 惯例平移后取 1');
+    if (!isFinite(b)) parts.push('与 y 轴<b>平行</b> → k = 0');
+    if (!isFinite(c)) parts.push('与 z 轴<b>平行</b> → l = 0');
+    if (!parts.length) parts.push('三条轴都相交，三个指数全非零');
+    note = parts.join('；') + '。';
+    if (zero) note = '三个倒数都是 0，不构成平面。';
+  }
+  $('planeNote').innerHTML = note;
+}
+['icX','icY','icZ'].forEach(id => $(id).addEventListener('input', drawPlaneLab));
+document.querySelectorAll('[data-pl]').forEach(b => b.onclick = () => {
+  const s = b.dataset.pl;
+  const inv = t => (t === '0' ? 'inf' : String(t));
+  $('icX').value = inv(s[0]); $('icY').value = inv(s[1]); $('icZ').value = inv(s[2]);
+  drawPlaneLab();
+});
+
+/* ============================================================
+   8. 第六节：[hkl] ⟂ (hkl)
+   ============================================================ */
+function drawPerp() {
+  const h = parseNum($('perpH').value), k = parseNum($('perpK').value), l = parseNum($('perpL').value);
+  const svg = $('svgPerp'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  const ok = [h,k,l].every(v => isFinite(v) && Math.abs(v) === Math.round(Math.abs(v))) &&
+             !(h === 0 && k === 0 && l === 0);
+  if (!ok) {
+    $('perpRead').innerHTML = '<span class="bad">请输入三个不全为 0 的整数</span>'; return;
+  }
+  drawPlane(S, h, k, l, C2, 0.20, null);
+  let mx = Math.max(Math.abs(h), Math.abs(k), Math.abs(l));
+  drawDir(S, h/mx, k/mx, l/mx, C1, '&nbsp;[' + [h,k,l].map(barNum).join('') + ']');
+  const nrm = [h, k, l];
+  const dot = h*h + k*k + l*l;
+  const len = Math.sqrt(dot) * Math.sqrt(h*h + k*k + l*l);
+  const cos = dot / len;
+  $('perpRead').innerHTML =
+    '<span class="m">' + idxStrBr(nrm, '[', ']') + ' · ' + idxStrBr(nrm, '[', ']') + ' = ' + dot + '</span>' +
+    '<span class="op">夹角 cos θ = ' + cos.toFixed(3) + '</span>' +
+    '<span class="tag a">θ = ' + (Math.acos(Math.min(1, cos)) * 180 / Math.PI).toFixed(1) + '° ⟂</span>' +
+    '<div class="hint" style="width:100%">立方晶系中晶面 (hkl) 的法向量恰好是 [hkl]，' +
+    '而 [hkl] 与自身方向天然平行，所以两者一定垂直。</div>';
+}
+['perpH','perpK','perpL'].forEach(id => $(id).addEventListener('input', drawPerp));
+/* ============================================================
+   9. 第七节：晶向族与晶面族
+   ============================================================ */
+function famDirs(base) {
+  const out = [], seen = new Set();
+  const Ps = [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+  Ps.forEach(p => {
+    const b = [base[p[0]], base[p[1]], base[p[2]]];
+    const nz = b.filter(x => x !== 0).length;
+    for (let m = 0; m < (1 << nz); m++) {
+      let bit = 0;
+      const v = b.map(x => {
+        if (x === 0) return 0;
+        const s = (m >> bit) & 1 ? -1 : 1; bit++;
+        return x * s;
+      });
+      const key = v.join(',');
+      if (!seen.has(key)) { seen.add(key); out.push(v); }
+    }
+  });
+  out.sort((a, b) => b[0]-a[0] || b[1]-a[1] || b[2]-a[2]);
+  return out;
+}
+const FAMDIR = { '100': famDirs([1,0,0]), '110': famDirs([1,1,0]), '111': famDirs([1,1,1]) };
+function drawFamDir(key) {
+  if (key) FAMD = key; key = FAMD;
+  const list = FAMDIR[key];
+  const svg = $('svgFamDir'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  list.forEach((v, i) => {
+    const c = 'var(--accent)';
+    drawDir(S, v[0], v[1], v[2], c, null, [0,0,0], false);
+  });
+  $('famDirRead').innerHTML =
+    '<span class="m" style="color:var(--accent);font-size:18px">&lt; ' + key + ' &gt;</span>' +
+    '<span class="tag a">共 ' + list.length + ' 个方向</span>' +
+    '<span class="hint" style="width:100%">' +
+    list.map(v => idxStrBr(v, '[', ']')).join(' , ') + '</span>';
+}
+document.querySelectorAll('[data-fd]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('[data-fd]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); drawFamDir(b.dataset.fd);
+});
+
+/* SVG <text> 里不能用 HTML，负数只能用「数字 + 组合上划线 U+0305」 */
+function barTxt(n) { return n < 0 ? String(Math.abs(n)) + '\u0305' : String(n); }
+function miniCube(parent, hkl, color) {
+  const svg = mk('svg', { viewBox: '0 0 210 172' }, parent);
+  svg.style.width = '100%'; svg.style.height = 'auto';
+  svg.style.pointerEvents = 'none';
+  const S = scene(svg, { view: MINIVIEW, bounds: [[0,1],[0,1],[0,1]], fill: 0.78, cyShift: -6 });
+  S.cube();
+  drawPlane(S, hkl[0], hkl[1], hkl[2], color, 0.24, null);
+  const t = mk('text', { x: 105, y: 164, style: 'font-size:14px;font-weight:600;text-anchor:middle;fill:var(--fg)' }, svg);
+  t.textContent = '(' + hkl.map(barTxt).join('') + ')';
+  return svg;
+}
+const FAMPLANE = {
+  '100': famDirs([1,0,0]),          // 6 个立方体表面
+  '110': famDirs([1,1,0]),          // 12 个对角面
+  '111': [[1,1,1], [-1,1,1], [1,-1,1], [1,1,-1]]   // 4 个等边三角形面（构成四面体）
+};
+function drawFamPlane(key) {
+  if (key) FAMP = key; key = FAMP;
+  const box = $('famPlaneGrid'); box.innerHTML = '';
+  const list = FAMPLANE[key];
+  list.forEach((v, i) => {
+    const d = document.createElement('div');
+    d.style.cssText = 'background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px';
+    box.appendChild(d);
+    miniCube(d, v, 'var(--accent)');
+  });
+  $('famPlaneCount').innerHTML = '<span class="k">成员</span><b>' + list.length + '</b>';
+  const notes = {
+    '100': '立方晶胞的 6 个面本身：前、后、左、右、上、下。',
+    '110': '12 个对角面，每个都通过一对棱、与第三条轴平行。',
+    '111': '只有 4 个面——4 个等边三角形正好围成一个四面体。注意：同一取向的平行面只算一个，' +
+      '所以虽然 <span class="m">&lt;111&gt;</span> 有 8 个<b>方向</b>，<span class="m">{111}</span> 却只有 4 个<b>面</b>。'
+  };
+  $('famPlaneHint').innerHTML = notes[key] + ' 另外：指数整体乘 <span class="m">n</span>（如 <span class="m">(200)</span>）' +
+    '与原来的面<b>平行但不等价</b>，面间距变为 <span class="m">1/n</span>，方向不变——它们属于同一个「平行面组」，但归属不同的 <span class="m">{hkl}</span> 族。';
+}
+document.querySelectorAll('[data-fp]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('[data-fp]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); drawFamPlane(b.dataset.fp);
+});
+
+/* ============================================================
+   10. 例题 1–3
+   ============================================================ */
+const C3 = 'var(--ok)';
+function ex1() {
+  const svg = $('ex1'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  if (EX1V) {
+    drawDir(S, EX1V[0], EX1V[1], EX1V[2], C3, '&nbsp;[' + EX1V.map(barNum).join('') + ']');
+    S.html([0.62, 0.62, 0.62], '<span class="m" style="color:var(--dim)">终点 (' + EX1V.join(',') + ')</span>', 0, -20);
+    return;
+  }
+  drawDir(S, 1, 0, 0, C1, '&nbsp;[100]');
+  drawDir(S, 0, 1, 0, C2, '&nbsp;[010]');
+  drawDir(S, 1, 1, 1, C3, '&nbsp;[111]');
+}
+document.querySelectorAll('[data-try-ex1]').forEach(b => b.onclick = () => {
+  EX1V = b.dataset.tryEx1.split(',').map(Number);
+  ex1();
+  $('ex1Hint').innerHTML = '终点就是指数本身：<span class="m">[' + EX1V.join('') + '] → (' + EX1V.join(', ') + ')</span>。' +
+    '（再点一次「⟲ 还原」只复原视角，想回到原题请刷新或看上方图注）';
+});
+
+const EX2 = { rev: false, shift: false, revealed: false };
+function ex2() {
+  const svg = $('ex2'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  const from = EX2.shift ? [0.5, 0.5, 0] : [1, 1, 0];
+  const tip = EX2.rev ? [from[0], from[1], from[2] - 1] : [from[0], from[1], from[2] + 1];
+  S.dot([0,0,0], 3.4, C_DIM);
+  mk('line', { x1: S.P(from)[0], y1: S.P(from)[1], x2: S.P(tip)[0], y2: S.P(tip)[1],
+    style: 'stroke:' + C1 + ';stroke-width:2.8;stroke-linecap:round' }, svg);
+  const a = S.P(from), b2 = S.P(tip);
+  const L = Math.hypot(b2[0]-a[0], b2[1]-a[1]) || 1, ux = (b2[0]-a[0])/L, uy = (b2[1]-a[1])/L, sz = 11;
+  const bx = b2[0]-ux*sz, by = b2[1]-uy*sz, px = -uy, py = ux;
+  mk('polygon', { points: [[b2[0],b2[1]],[bx+px*4.4,by+py*4.4],[bx-px*4.4,by-py*4.4]]
+    .map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join(' '), style: 'fill:' + C1 }, svg);
+  S.dot(from, 3.6, C1);
+  if (EX2.shift) {
+    S.html(from, '<span class="m" style="color:var(--accent)">起点</span>', -30, 26);
+  } else {
+    S.html([1,1,0], '<span class="m" style="color:var(--accent)">起点 (1,1,0)</span>', -14, 42);
+  }
+  if (EX2.revealed) {
+    const arr = EX2.rev ? [0,0,-1] : [0,0,1];
+    S.html(tip, idxStrBr(arr, '[', ']'), 2, -24);
+    S.html(from, '<span class="m" style="color:var(--dim)">' + (EX2.shift ? '(½,½,0)' : '(1,1,0)') + '</span>', 0, 0);
+  } else {
+    S.html(tip, '<span class="m" style="color:var(--accent2)">[ ??? ]</span>', 2, -24);
+  }
+}
+$('ex2Reveal').onclick = () => { EX2.revealed = true; ex2(); $('ex2Ans').innerHTML = idxStrBr(EX2.rev ? [0,0,-1] : [0,0,1], '[', ']'); };
+document.querySelectorAll('[data-try-ex2]').forEach(b => b.onclick = () => {
+  const s = b.dataset.tryEx2;
+  EX2.rev = s === '0,0,-1'; EX2.shift = s === '1,1,0'; EX2.revealed = true;
+  ex2();
+  $('ex2Ans').innerHTML = idxStrBr(EX2.rev ? [0,0,-1] : [0,0,1], '[', ']');
+  $('ex2Hint').innerHTML = EX2.shift
+    ? '把箭头整体平移：起点变到 (½,½,0)，终点 (½,½,1)，位移仍是 (0,0,1) → 指数不变 <span class="m">[001]</span>。<b>晶向只与原点到终点的位移有关，与画在哪无关。</b>'
+    : '反向就是三个指数同时取反：<span class="m">[00' + '<span class="bar">1</span>' + ']</span>。';
+});
+
+const EX3 = { origin: 0 };
+const P3 = [0.5, 2/3, 0.5];
+function ex3() {
+  const svg = $('ex3'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  const O = EX3.origin === 0 ? [0,0,0] : [1,1,0];
+  const d = [P3[0]-O[0], P3[1]-O[1], P3[2]-O[2]];
+  const Lc = [d[0], d[1], d[2]];
+  let L = 1; Lc.forEach(t => { if (Math.abs(t) > 1e-9) L = lcm(L, fmtDen(t)); });
+  const idx = Lc.map(t => Math.round(t * L));
+  // 坐标分解虚线
+  S.line(O, [P3[0], O[1], O[2]], 'stroke:' + C2 + ';stroke-width:1.3;stroke-dasharray:4 3');
+  S.line([P3[0], O[1], O[2]], [P3[0], P3[1], O[2]], 'stroke:' + C2 + ';stroke-width:1.3;stroke-dasharray:4 3');
+  S.line([P3[0], P3[1], O[2]], P3, 'stroke:' + C2 + ';stroke-width:1.3;stroke-dasharray:4 3');
+  if (EX3.origin === 1) S.cube(C_GHOST, S.layers.cube, [1, 1, 0]);
+  drawDir(S, d[0], d[1], d[2], C1, idxStrBr(idx, '[', ']'), O);
+  S.dot(P3, 5.5, C2);
+  S.html(P3, '<span class="m">点 (½,⅔,½)</span>', 6, -62);
+  S.dot(O, 4, C3);
+  S.html(O, '<span class="m" style="color:var(--ok)">原点</span>', 0, 26);
+  $('ex3Read').innerHTML =
+    '<span class="lbl">原点</span><span class="m">(' + (EX3.origin === 0 ? '0,0,0' : '1,1,0') + ')</span>' +
+    '<span class="lbl">位移</span><span class="m">( ' + d.map(function(v){ return fracHTML(v, true); }).join(' , ') + ' )</span>' +
+    '<span class="op">× ' + L + ' →</span><span class="m" style="color:var(--accent);font-size:19px">[ ' + idx.map(barNum).join(' ') + ' ]</span>';
+}
+$('ex3O1').onclick = () => { EX3.origin = 0; $('ex3O1').classList.add('on'); $('ex3O2').classList.remove('on'); ex3(); };
+$('ex3O2').onclick = () => { EX3.origin = 1; $('ex3O2').classList.add('on'); $('ex3O1').classList.remove('on'); ex3(); };
+/* ============================================================
+   11. 例题 4–6
+   ============================================================ */
+const EX4 = { step: 1 };
+function ex4() {
+  const svg = $('ex4'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  if (EX4.alt) {
+    drawDir(S, EX4.alt.a[0], EX4.alt.a[1], EX4.alt.a[2], C1, null);
+    drawDir(S, EX4.alt.c[0], EX4.alt.c[1], EX4.alt.c[2], C2, null);
+    drawPlane(S, EX4.alt.nn[0], EX4.alt.nn[1], EX4.alt.nn[2], C3, 0.20, null);
+    return;
+  }
+  if (EX4.step >= 2) drawPlane(S, 0, 0, 1, C3, 0.20, null, null, 0);
+  drawDir(S, -1, 0, 0, C1, null, [1, 0, 0]);
+  drawDir(S, 0, 1, 0, C2, null, [0, 0, 0]);
+  S.html([0.55, 0.1, 0], idxStrBr([-1,0,0], '[', ']'), -46, -44);
+  S.html([0.24, 1.0, 0], idxStrBr([0,1,0], '[', ']'), 40, 20);
+  if (EX4.step >= 2) S.html([0.5, 0.5, 0], '<span class="m" style="color:var(--ok)">(001)</span>', 0, -26);
+  if (EX4.step >= 3) {
+    drawDir(S, 0, 0, 1, C_DIM, null);
+    S.html([0, 0, 1.15], idxStrBr([0,0,1], '[', ']'), 34, -6);
+  }
+  if (EX4.step === 1) $('ex4Hint').innerHTML = '第一步：两个晶向都画出来了——注意 [1̄00] 往 −x 走，用某一格晶胞看，它就从前左下角出发。';
+}
+['ex4S1','ex4S2','ex4S3'].forEach((id, i) => $(id).onclick = () => {
+  EX4.alt = null; EX4.step = i + 1;
+  ['ex4S1','ex4S2','ex4S3'].forEach((x, j) => $(x).classList.toggle('on', j === i));
+  ex4();
+});
+document.querySelectorAll('[data-try-ex4]').forEach(b => b.onclick = () => {
+  const [v1, v2, ans] = b.dataset.tryEx4.split('|');
+  const a = v1.split(',').map(Number), c = v2.split(',').map(Number);
+  const n = [a[1]*c[2]-a[2]*c[1], a[2]*c[0]-a[0]*c[2], a[0]*c[1]-a[1]*c[0]];
+  const g0 = Math.abs(gcd(gcd(n[0], n[1]), n[2])) || 1;
+  EX4.alt = { a: a, c: c, n: n, nn: n.map(x => x / g0), ans: ans };
+  ['ex4S1','ex4S2','ex4S3'].forEach(x => x.classList.remove('on'));
+  ex4();
+  $('ex4Hint').innerHTML = '叉乘求法向：' + idxStrBr(a,'[',']') + ' × ' + idxStrBr(c,'[',']') +
+    ' = (' + n.join(', ') + ') → 共同平面 <b>' + ans + '</b>（法向归一：(' + EX4.alt.nn.join(',') + ')）。';
+});
+
+function ex5() {
+  const svg = $('ex5'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  drawPlane(S, 1, 1, 0, C1, 0.12, '(110)', [0.35, 0.5, 0.42]);
+  drawPlane(S, 2, 2, 0, C2, 0.32, '(220)', [0.5, 0.5, 1.14]);
+  S.dot([0, 0.5, 0.5], 4.6, C3);
+  S.html([0, 0.5, 0.5], '<span class="m" style="color:var(--ok)">(0,½,½)</span>', 78, 4);
+}
+
+const EX6 = { plane: true, a3: true };
+function ex6() {
+  const svg = $('ex6'); clearSvg(svg);
+  const cx = 262, cy = 200, R = 122;
+  const rot = (deg, r) => [cx + r * Math.cos(deg * Math.PI / 180), cy - r * Math.sin(deg * Math.PI / 180)];
+  const hex = []; for (let i = 0; i < 6; i++) hex.push(rot(60 * i, R));
+  mk('polygon', { points: hex.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '),
+    style: 'fill:var(--panel);fill-opacity:.5;stroke:var(--axis);stroke-width:1.5' }, svg);
+  const A1 = rot(0, R), A2 = rot(120, R), A3 = rot(240, R), MID = rot(60, R);
+  mk('polygon', { points: [[cx,cy], A1, MID, A2].map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '),
+    style: 'fill:' + C1 + ';fill-opacity:.08;stroke:var(--ghost);stroke-width:1;stroke-dasharray:4 3' }, svg);
+  const arw = (to, color, label, off) => {
+    mk('line', { x1: cx, y1: cy, x2: to[0], y2: to[1],
+      style: 'stroke:' + color + ';stroke-width:2.3;stroke-linecap:round' }, svg);
+    const ux = (to[0]-cx)/R, uy = (to[1]-cy)/R, sz = 10;
+    const bx = to[0]-ux*sz, by = to[1]-uy*sz, px = -uy, py = ux;
+    mk('polygon', { points: [[to[0],to[1]],[bx+px*4,by+py*4],[bx-px*4,by-py*4]]
+      .map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join(' '), style: 'fill:' + color }, svg);
+    const t = mk('text', { x: to[0]+ux*(off||30), y: to[1]+uy*(off||30),
+      style: 'font-size:14px;font-weight:600;text-anchor:middle;fill:' + color }, svg);
+    t.innerHTML = label;
+  };
+  arw(A1, C_DIM, 'a₁'); arw(A2, C_DIM, 'a₂');
+  if (EX6.a3) arw(A3, C_GHOST, 'a₃');
+  const p0 = rot(0, 44), p1 = rot(120, 44);
+  mk('path', { d: 'M ' + p0[0].toFixed(1) + ' ' + p0[1].toFixed(1) + ' A 44 44 0 0 0 ' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1),
+    style: 'fill:none;stroke:var(--accent2);stroke-width:1.2' }, svg);
+  const m2 = rot(60, 60);
+  mk('text', { x: cx + 35, y: cy - 20, style: 'font-size:13px;fill:var(--accent2);font-weight:600;text-anchor:middle' }, svg).textContent = '120°';
+  if (EX6.plane) {
+    mk('line', { x1: A1[0], y1: A1[1], x2: A2[0], y2: A2[1],
+      style: 'stroke:' + C3 + ';stroke-width:2.6;stroke-dasharray:7 4' }, svg);
+    const mp = [(A1[0]+A2[0])/2, (A1[1]+A2[1])/2];
+    mk('text', { x: mp[0] - 62, y: mp[1] - 34, style: 'font-size:13.5px;font-weight:600;fill:' + C3 + ';text-anchor:middle' }, svg)
+      .innerHTML = '面迹 (110)';
+  }
+  // [110] 方向
+  mk('line', { x1: cx, y1: cy, x2: MID[0], y2: MID[1],
+    style: 'stroke:' + C1 + ';stroke-width:3;stroke-linecap:round' }, svg);
+  const ux = (MID[0]-cx)/R, uy = (MID[1]-cy)/R, sz = 11;
+  mk('polygon', { points: [[MID[0],MID[1]],[MID[0]-ux*sz-uy*4.5,MID[1]-uy*sz+ux*4.5],[MID[0]-ux*sz+uy*4.5,MID[1]-uy*sz-ux*4.5]]
+    .map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join(' '), style: 'fill:' + C1 }, svg);
+  mk('text', { x: MID[0] + ux*34 - 6, y: MID[1] + uy*34 + 4, style: 'font-size:15px;font-weight:700;fill:' + C1 }, svg)
+    .innerHTML = '[110]';
+  mk('circle', { cx: MID[0], cy: MID[1], r: 4.6, style: 'fill:' + C1 }, svg);
+  const t1 = mk('text', { x: A1[0] + 26, y: A1[1] + 26, style: 'font-size:12.5px;fill:var(--dim);text-anchor:middle' }, svg);
+  t1.innerHTML = '(1,0,0)';
+  const t2 = mk('text', { x: A2[0] - 44, y: A2[1] + 10, style: 'font-size:12.5px;fill:var(--dim);text-anchor:middle' }, svg);
+  t2.innerHTML = '(0,1,0)';
+  const t3 = mk('text', { x: 262, y: 372, style: 'font-size:13px;fill:var(--dim);text-anchor:middle' }, svg);
+  t3.innerHTML = '六方底面（俯视）：a₁、a₂ 夹角 120°，晶面 (110) 平行于 c 轴（沿 c 的截距为 ∞）';
+  $('ex6Hint').innerHTML = EX6.a3
+    ? '左下角那条 a₃ 指向 240°，而 [110] = a₁ + a₂ 恰好指向 −a₃ 的反方向（60°），两者刚好反向共线。'
+    : 'a₃ 是冗余轴（a₃ = −a₁ − a₂），关掉它也不影响读取 [110]。';
+  if (svg.__view) wrapView(svg, svg.__view, cx, cy);
+}
+$('ex6Toggle').onclick = () => { EX6.plane = !EX6.plane; ex6(); };
+$('ex6Axes').onclick = () => { EX6.a3 = !EX6.a3; ex6(); };
+
+document.querySelectorAll('[data-try-ex3]').forEach(b => b.onclick = () => {
+  const v = b.dataset.tryEx3.split(',');
+  $('ex3Hint').innerHTML = '点 <span class="m">(⅓,¼,½)</span> 的分母是 3、4、2，最小公倍数 <b>' + v[0] + '</b>，' +
+    '乘完得到 <span class="m">[' + v[1] + v[2] + v[3] + ']</span>（即 <span class="m">(4,3,6)</span>）。';
+});
+
+/* ============================================================
+   12. 自测：随机题
+   ============================================================ */
+const QDIRS = [[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[-1,1,0],[1,-1,0],[0,0,-1],[-1,0,0],[1,-1,-1],[-1,1,1]];
+const QPLANES = [[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[-1,1,0],[2,0,0],[2,2,0],[-1,1,1],[1,-1,1]];
+const Q = { mode: 'dir', cur: null, streak: 0, ok: 0, tot: 0, answered: false };
+function qNorm(v) {
+  const g = v.reduce((a, x) => gcd(a, Math.abs(x)), 0) || 1;
+  return v.map(x => x / g);
+}
+function qNew() {
+  Q.answered = false;
+  Q.cur = Q.mode === 'dir' ? QDIRS[Math.floor(Math.random() * QDIRS.length)]
+                           : QPLANES[Math.floor(Math.random() * QPLANES.length)];
+  QMINI = Q.cur;
+  qDraw();
+  $('qPrompt').innerHTML = Q.mode === 'dir'
+    ? '图中箭头标出了一个<b>晶向</b>。写出它的米勒指数 ' + idxStrBr(['?','?','?'], '[', ']') + '：'
+    : '图中标出了一个<b>晶面</b>（面与三条轴的交点可以看出来）。写出它的米勒指数：';
+  $('qInputs').innerHTML = ['第一个', '第二个', '第三个'].map((t, i) =>
+    '<span class="lbl">' + (Q.mode === 'dir' ? ['u (沿 x)', 'v (沿 y)', 'w (沿 z)'][i] : ['h', 'k', 'l'][i]) + '</span>' +
+    '<input class="num" id="qi' + i + '" value="0">').join('');
+  $('qFeed').innerHTML = '';
+}
+function qCheck(showOnly) {
+  const v = [0,1,2].map(i => { const x = parseNum($('qi' + i).value); return isFinite(x) ? Math.round(x) : 0; });
+  const a = qNorm(Q.cur), b = qNorm(v);
+  const good = a.join(',') === b.join(',');
+  if (!showOnly) { Q.tot++; if (good) { Q.ok++; Q.streak++; } else Q.streak = 0; }
+  $('qStreak').textContent = Q.streak;
+  $('qScore').textContent = Q.ok + ' / ' + Q.tot;
+  const wrap = Q.mode === 'dir' ? ['[', ']'] : ['(', ')'];
+  const your = '<span class="m">' + wrap[0] + v.map(barNum).join('') + wrap[1] + '</span>';
+  const ans = '<span class="m" style="color:var(--accent);font-size:18px">' + wrap[0] + Q.cur.map(barNum).join('') + wrap[1] + '</span>';
+  let tip = '';
+  if (Q.mode === 'dir') {
+    tip = '数格子：沿三条轴各走 ' + Q.cur.join('、') + ' 格。' +
+      (Q.cur.some(x => x < 0) ? '出现负数时把向量画到相邻晶胞里读，或者直接取反。' : '');
+  } else {
+    const ic = Q.cur.map(x => (x === 0 ? '∞' : '1/' + Math.abs(x)));
+    tip = '先看截距：' + Q.cur.map((x, i) => (x === 0 ? ['x', 'y', 'z'][i] + ' 轴平行' : '')).filter(Boolean).join('、') +
+      (Q.cur.every(x => x !== 0) ? '三条轴都相交' : '') + '，取倒数后得到 ' + ans + '。';
+  }
+  $('qFeed').innerHTML = showOnly
+    ? '正确答案：' + ans + '<div class="hint">' + tip + '</div>'
+    : (good ? '<span class="ok">✓ 正确</span>｜你写的 ' + your + ' 与 ' + ans + ' 一致。<div class="hint">' + tip + '</div>'
+            : '<span class="bad">✗ 再想想</span>｜你写的 ' + your + '，正确是 ' + ans + '。<div class="hint">' + tip + '</div>');
+}
+$('qDir').onclick = () => { Q.mode = 'dir'; $('qDir').classList.add('on'); $('qPlane').classList.remove('on'); qNew(); };
+$('qPlane').onclick = () => { Q.mode = 'plane'; $('qPlane').classList.add('on'); $('qDir').classList.remove('on'); qNew(); };
+$('qCheck').onclick = () => qCheck(false);
+$('qShow').onclick = () => qCheck(true);
+$('qNext').onclick = qNew;
+
+
+/* 立方 / 四方对比（第七节） */
+function drawTetraCompare() {
+  [{ id: 'svgCubTetra', sz: 1 }, { id: 'svgTetra', sz: 1.45 }].forEach(cc => {
+    const svg = $(cc.id); clearSvg(svg);
+    const S = scene(svg, { sz: cc.sz, axLen: 1.15 });
+    S.cube(); S.axes();
+    drawDir(S, 1, 0, 0, C1, null);
+    drawDir(S, 0, 1, 0, C1, null);
+    drawDir(S, 0, 0, 1, cc.sz > 1 ? C2 : C1, null);
+    const T = (x, y, txt) => {
+      mk('text', { x: x, y: y, style: 'font-size:13.5px;text-anchor:middle;fill:var(--fg)' }, svg).innerHTML = txt;
+    };
+    if (cc.sz === 1) {
+      T(272, 16, '<tspan style="font-style:italic">a</tspan> = <tspan style="font-style:italic">a</tspan> = <tspan style="font-style:italic">a</tspan>：三条轴全等');
+      T(272, 36, '<tspan style="fill:var(--accent)">[100][010][001] 同属 &lt;100&gt;</tspan>');
+      T(272, 56, '六个方向完全等价');
+    } else {
+      T(272, 16, '<tspan style="font-style:italic">a</tspan> = <tspan style="font-style:italic">a</tspan> ≠ <tspan style="font-style:italic">c</tspan>：z 轴更长');
+      T(272, 36, '<tspan style="fill:var(--accent2)">[001] 落单 → 自成 &lt;001&gt;</tspan>');
+      T(272, 56, '<tspan style="fill:var(--accent)">&lt;100&gt; 只剩 [100][010][1̄00][01̄0]</tspan>');
+    }
+  });
+}
+
+/* ============================================================
+   12b. 视角交互：拖动旋转 / 滚轮缩放 / 一键还原
+   ============================================================ */
+const MINIVIEW = VIEW0();          // 晶面族缩略图共用一个视角
+const VIEWS = [];                  // 全部可交互图，供「全部还原」使用
+function wrapView(svg, view, cx, cy) {   // 给手绘 2D 图套一层可缩放/旋转的壳
+  const g = document.createElementNS(NS, 'g');
+  while (svg.firstChild) g.appendChild(svg.firstChild);
+  svg.appendChild(g);
+  g.setAttribute('transform',
+    'translate(' + (cx + view.panX) + ',' + (cy + view.panY) + ') scale(' + view.zoom +
+    ') rotate(' + view.rot + ') translate(' + (-cx) + ',' + (-cy) + ')');
+}
+function attachView(el, redraw, opts) {
+  opts = opts || {};
+  const view = opts.view || (el.__view = VIEW0());
+  const mode = opts.mode || '3d';
+  const host = opts.host || (el.closest && el.closest('.fig')) || el;
+  el.classList.add('vb');
+  el.style.touchAction = 'none';
+  const btn = document.createElement('button');
+  const inlineBtn = !(host.classList && host.classList.contains('fig'));
+  btn.className = 'rst' + (inlineBtn ? ' rstbar' : '');
+  btn.innerHTML = '⟲ 还原';
+  btn.title = '恢复初始视角（双击图面同样有效）';
+  host.appendChild(btn);
+  const d0 = VIEW0();
+  const changed = () => Math.abs(view.az - d0.az) > .5 || Math.abs(view.el - d0.el) > .5 ||
+    Math.abs(view.zoom - 1) > .01 || Math.abs(view.panX) > 1 || Math.abs(view.panY) > 1 ||
+    Math.abs(view.rot) > .5;
+  const sync = () => btn.classList.toggle('on', changed());
+  const reset = () => { Object.assign(view, VIEW0()); redraw(); sync(); };
+  btn.onclick = e => { e.stopPropagation(); reset(); };
+  const pts = new Map();
+  let last = null, p0 = 0, z0 = 1;
+  const two = () => [...pts.values()];
+  el.addEventListener('pointerdown', e => {
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pts.size === 1) last = [e.clientX, e.clientY];
+    else if (pts.size === 2) { const p = two(); p0 = Math.hypot(p[0][0]-p[1][0], p[0][1]-p[1][1]); z0 = view.zoom; }
+    e.preventDefault();
+  });
+  el.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pts.size >= 2) {
+      const p = two(), d = Math.hypot(p[0][0]-p[1][0], p[0][1]-p[1][1]);
+      if (p0 > 6) view.zoom = Math.max(.5, Math.min(3.2, z0 * d / p0));
+      redraw(); sync(); e.preventDefault(); return;
+    }
+    if (!last) return;
+    const dx = e.clientX - last[0], dy = e.clientY - last[1];
+    last = [e.clientX, e.clientY];
+    if (e.shiftKey) { view.panX += dx; view.panY += dy; }
+    else if (mode === '2d') view.rot += dx * .6;
+    else {
+      view.az -= dx * .45;
+      view.el = Math.max(-82, Math.min(82, view.el + dy * .45));
+    }
+    redraw(); sync(); e.preventDefault();
+  });
+  const up = e => { pts.delete(e.pointerId); if (!pts.size) last = null; };
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+  el.addEventListener('wheel', e => {
+    e.preventDefault();
+    view.zoom = Math.max(.5, Math.min(3.2, view.zoom * Math.exp(-e.deltaY * .0015)));
+    redraw(); sync();
+  }, { passive: false });
+  el.addEventListener('dblclick', e => { e.preventDefault(); reset(); });
+  sync();
+  VIEWS.push({ el: el, view: view, redraw: redraw, reset: reset, sync: sync });
+  return { view, reset, sync };
+}
+
+/* ---- 各图当前状态（重绘时要用，所以必须存住） ---- */
+let NOTA = 'pt', FAMD = '100', FAMP = '100';
+let EX1V = null;
+let QMINI = [1,0,0];
+function qDraw() {
+  const svg = $('svgQuiz'); clearSvg(svg);
+  const S = scene(svg); S.cube(); S.axes();
+  if (Q.mode === 'dir') drawDir(S, QMINI[0], QMINI[1], QMINI[2], C1, null);
+  else drawPlane(S, QMINI[0], QMINI[1], QMINI[2], C2, 0.26, null);
+}
+
+/* ============================================================
+   13. 初始化：分页路由 / 导航 / 主题 / 首屏渲染
+   ============================================================ */
+const PAGES = [];
+let curPage = 0;
+function buildNav() {
+  const secs = document.querySelectorAll('main section.page[id]');
+  let html = '', lastGroup = null;
+  Array.prototype.forEach.call(secs, s => {
+    const g = s.dataset.group || null;
+    if (g && g !== lastGroup) { html += '<li class="grp">' + g + '</li>'; lastGroup = g; }
+    else if (!g) lastGroup = null;
+    html += '<li' + (g ? ' class="sub"' : '') + '><a href="#' + s.id + '" data-for="' + s.id + '">' +
+      (s.dataset.nav || s.dataset.title || s.id) + '</a></li>';
+    PAGES.push(s);
+  });
+  $('nav').innerHTML = html;
+  $('pgTot').textContent = PAGES.length;
+  Array.prototype.forEach.call(document.querySelectorAll('#nav a'), a => {
+    a.onclick = e => { e.preventDefault(); showPage(a.dataset.for); };
+  });
+}
+function showPage(id, push) {
+  const idx = PAGES.findIndex(s => s.id === id);
+  if (idx < 0) return;
+  curPage = idx;
+  PAGES.forEach((s, i) => s.classList.toggle('on', i === idx));
+  Array.prototype.forEach.call(document.querySelectorAll('#nav a'),
+    a => a.classList.toggle('on', a.dataset.for === id));
+  $('pgNow').textContent = idx + 1;
+  $('pgTitle').innerHTML = PAGES[idx].dataset.title || '';
+  $('pgPrev').disabled = idx === 0;
+  $('pgNext').disabled = idx === PAGES.length - 1;
+  // 用 #p-xxx 而不是 #xxx，避免浏览器按锚点自动滚动
+  if (push !== false) { try { location.hash = 'p-' + id; } catch (e) {} }
+  window.scrollTo(0, 0);
+  const a = document.querySelector('#nav a.on');
+  if (a) {
+    const box = $('nav').parentElement;
+    const r = a.getBoundingClientRect(), b = box.getBoundingClientRect();
+    if (r.top < b.top + 10) box.scrollTop += r.top - b.top - 12;
+    else if (r.bottom > b.bottom - 10) box.scrollTop += r.bottom - b.bottom + 12;
+  }
+}
+function stepPage(d) {
+  const i = curPage + d;
+  if (i >= 0 && i < PAGES.length) showPage(PAGES[i].id);
+}
+$('pgPrev').onclick = () => stepPage(-1);
+$('pgNext').onclick = () => stepPage(1);
+document.addEventListener('keydown', e => {
+  const t = e.target && e.target.tagName;
+  if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT' || e.metaKey || e.ctrlKey) return;
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') { stepPage(1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { stepPage(-1); e.preventDefault(); }
+  else if (e.key === 'Home') { showPage(PAGES[0].id); e.preventDefault(); }
+  else if (e.key === 'End') { showPage(PAGES[PAGES.length - 1].id); e.preventDefault(); }
+});
+window.addEventListener('hashchange', () => {
+  const id = location.hash.replace(/^#p-/, '');
+  if (id && PAGES[curPage] && id !== PAGES[curPage].id && PAGES.some(s => s.id === id)) showPage(id, false);
+});
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  $('themeBtn').textContent = t === 'dark' ? '☀ 浅色' : '☾ 深色';
+}
+$('themeBtn').onclick = () => {
+  const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(t);
+  try { localStorage.setItem('mi-theme', t); } catch (e) {}
+  // 主题变化后重画相册（颜色走 CSS 变量，一般无需重画，这里仅刷新外框）
+  setTimeout(() => { document.querySelectorAll('svg').forEach(s => { s.style.opacity = .999; setTimeout(() => s.style.opacity = '', 30); }); }, 0);
+};
+function init() {
+  let t = 'dark';
+  try { t = localStorage.getItem('mi-theme') || 'dark'; } catch (e) {}
+  applyTheme(t);
+  buildNav();
+  drawNota('pt');
+  document.querySelector('[data-nota="pt"]').classList.add('on');
+  drawCoord(); drawHexTop(); readPt();
+  drawDirLab(); drawPlaneLab(); drawPerp();
+  drawFamDir('100'); drawFamPlane('100'); drawTetraCompare();
+  ex1(); ex2(); ex3(); ex4(); ex5(); ex6();
+  qNew();
+
+  /* 给每一张图挂上：拖动旋转 / 滚轮缩放 / Shift 拖动平移 / 双击还原 */
+  const V = (sel, fn, o) => attachView($(sel), fn, o);
+  V('svgNota', () => drawNota());
+  V('svgCoord', drawCoord);
+  V('svgHexTop', drawHexTop, { mode: '2d' });   // 底面俯视图：拖动 = 平面内旋转
+  V('svgPt', readPt);
+  V('svgDir', drawDirLab);
+  V('svgPlane', drawPlaneLab);
+  V('svgPerp', drawPerp);
+  V('svgFamDir', () => drawFamDir());
+  V('svgCubTetra', drawTetraCompare);
+  V('svgTetra', drawTetraCompare);
+  V('svgQuiz', qDraw);
+  [['ex1', ex1], ['ex2', ex2], ['ex3', ex3], ['ex4', ex4], ['ex5', ex5]].forEach(a => V(a[0], a[1]));
+  V('ex6', ex6, { mode: '2d' });
+  // 晶面族缩略图共用一个视角：拖动任意一张，整组一起转
+  attachView($('famPlaneGrid'), () => drawFamPlane(), { view: MINIVIEW, host: $('famPlaneBar') });
+  $('resetAll').onclick = () => VIEWS.forEach(v => v.reset());
+  window.MI = { views: VIEWS, resetAll: () => VIEWS.forEach(v => v.reset()), pages: PAGES, show: showPage, step: stepPage };
+  // 打开时定位到当前页（支持 #p-xxx 直达）
+  const startId = location.hash.replace(/^#p-/, '');
+  showPage(PAGES.some(s => s.id === startId) ? startId : PAGES[0].id, false);
+}
+init();
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
